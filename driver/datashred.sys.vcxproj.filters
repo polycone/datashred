@@ -23,4 +23,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Inf Include="Datashred.inf" />
+  </ItemGroup>
 </Project>
