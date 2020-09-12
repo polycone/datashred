@@ -69,9 +69,15 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <OutDir>$(SolutionDir)build\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\.$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName.substring(0, $(ProjectName.LastIndexOf("."))))</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <OutDir>$(SolutionDir)build\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\.$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName.substring(0, $(ProjectName.LastIndexOf("."))))</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -82,6 +88,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <OutDir>$(SolutionDir)build\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\.$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName.substring(0, $(ProjectName.LastIndexOf("."))))</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Link>
