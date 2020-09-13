@@ -29,7 +29,7 @@ typedef struct _DS_COMMUNICATION {
 	BOOLEAN Initialized;
 } DS_COMMUNICATION, *PDS_COMMUNICATION;
 
-NTSTATUS DsCreateCommunication(_Inout_ PDS_COMMUNICATION);
+NTSTATUS DsCreateCommunication(_Inout_ PDS_COMMUNICATION Communication);
 VOID DsCloseCommunication(_In_ PDS_COMMUNICATION Communication);
 
 #define SetupCommunication(Communication, Name, OnConnect, OnDisconnect, OnMessage) { \
