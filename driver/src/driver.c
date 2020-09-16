@@ -16,7 +16,7 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "datashred.h"
+#include "driver.h"
 
 NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
 static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
@@ -29,47 +29,47 @@ static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS flags);
 #endif
 
 static const FLT_OPERATION_REGISTRATION callbacks[] = {
-	{ IRP_MJ_OPERATION_END }
+    { IRP_MJ_OPERATION_END }
 };
 
 static const FLT_REGISTRATION filterRegistration = {
-	sizeof(FLT_REGISTRATION),
-	FLT_REGISTRATION_VERSION,
-	FLTFL_NONE,
-	NO_CONTEXT,
-	callbacks,
-	DsFilterUnload,
-	NO_CALLBACK,
-	NO_CALLBACK,
-	NO_CALLBACK,
-	NO_CALLBACK,
-	NO_CALLBACK,
-	NO_CALLBACK,
-	NO_CALLBACK,
-	NO_CALLBACK,
-	NO_CALLBACK
+    sizeof(FLT_REGISTRATION),
+    FLT_REGISTRATION_VERSION,
+    FLTFL_NONE,
+    NO_CONTEXT,
+    callbacks,
+    DsFilterUnload,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK
 };
 
 NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRegistryPath) {
-	return DsFilterLoad(pDriverObject, pRegistryPath);
+    return DsFilterLoad(pDriverObject, pRegistryPath);
 }
 
 static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRegistryPath) {
-	UNREFERENCED_PARAMETER(pRegistryPath);
-	NTSTATUS status = FltRegisterFilter(pDriverObject, &filterRegistration, &State.Filter);
-	FLT_ASSERT(NT_SUCCESS(status));
-	if (NT_SUCCESS(status)) {
-		status = FltStartFiltering(State.Filter);
-		if (!NT_SUCCESS(status)) {
-			FltUnregisterFilter(State.Filter);
-		}
-	}
-	return status;
+    UNREFERENCED_PARAMETER(pRegistryPath);
+    NTSTATUS status = FltRegisterFilter(pDriverObject, &filterRegistration, &State.Filter);
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
+    status = FltStartFiltering(State.Filter);
+    if (!NT_SUCCESS(status)) {
+        FltUnregisterFilter(State.Filter);
+    }
+    return status;
 }
 
-static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS flags) {
-	UNREFERENCED_PARAMETER(flags);
-	PAGED_CODE();
-	FltUnregisterFilter(State.Filter);
-	return STATUS_SUCCESS;
+static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS Flags) {
+    UNREFERENCED_PARAMETER(Flags);
+    PAGED_CODE();
+    FltUnregisterFilter(State.Filter);
+    return STATUS_SUCCESS;
 }

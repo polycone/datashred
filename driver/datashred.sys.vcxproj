@@ -128,13 +128,15 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\communication.c" />
-    <ClCompile Include="src\datashred.c" />
+    <ClCompile Include="src\connect.c" />
+    <ClCompile Include="src\driver.c" />
+    <ClCompile Include="src\memory.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h" />
-    <ClInclude Include="src\communication.h" />
-    <ClInclude Include="src\datashred.h" />
+    <ClInclude Include="src\connect.h" />
+    <ClInclude Include="src\driver.h" />
+    <ClInclude Include="src\memory.h" />
   </ItemGroup>
   <ItemGroup>
     <Inf Include="Datashred.inf" />

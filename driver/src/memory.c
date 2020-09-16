@@ -16,11 +16,24 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
-#include <fltKernel.h>
-#include <dontuse.h>
-#pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
+#include "memory.h"
 
-#define FLTFL_NONE      0
-#define NO_CALLBACK     NULL
-#define NO_CONTEXT      NULL
+#define DEFAULT_PAGED_POOL_TAG      'pPsD'
+
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text(PAGE, DsMemAlloc)
+#pragma alloc_text(PAGE, DsMemFree)
+#endif
+
+NTSTATUS DsMemAlloc(_In_ SIZE_T Size, _Out_ PVOID *Pointer) {
+    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DEFAULT_PAGED_POOL_TAG);
+    if (pointer == NULL) {
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+    *Pointer = pointer;
+    return STATUS_SUCCESS;
+}
+
+VOID DsMemFree(_In_ PVOID Pointer) {
+    ExFreePoolWithTag(Pointer, DEFAULT_PAGED_POOL_TAG);
+}

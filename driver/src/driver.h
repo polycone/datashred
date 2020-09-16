@@ -17,10 +17,12 @@
  */
 
 #pragma once
-#include <fltKernel.h>
-#include <dontuse.h>
-#pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
+#include "common.h"
+#include "driver.h"
+#include "connect.h"
 
-#define FLTFL_NONE      0
-#define NO_CALLBACK     NULL
-#define NO_CONTEXT      NULL
+typedef struct _DATASHRED_STATE {
+    PFLT_FILTER Filter;
+} DATASHRED_STATE, *PDATASHRED_STATE;
+
+DATASHRED_STATE State;

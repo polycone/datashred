@@ -18,10 +18,8 @@
 
 #pragma once
 #include "common.h"
-#include "datashred.h"
 
-typedef struct _DATASHRED_STATE {
-	PFLT_FILTER Filter;
-} DATASHRED_STATE, * PDATASHRED_STATE;
+#define DsMemAllocType(type, pointer) DsMemAlloc(sizeof(type), pointer)
 
-DATASHRED_STATE State;
+NTSTATUS DsMemAlloc(_In_ SIZE_T Size, _Out_ PVOID *Pointer);
+VOID DsMemFree(_In_ PVOID Pointer);
