@@ -17,8 +17,8 @@
  */
 
 #include "connect.h"
-#include "memory.h"
 #include "filter.h"
+#include "../util/memory.h"
 
 #define DSC_MAX_CONNECTIONS 1
 

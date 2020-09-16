@@ -14,20 +14,14 @@
     <ClCompile Include="src\driver.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\connect.c">
+    <ClCompile Include="src\util\memory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\memory.c">
+    <ClCompile Include="src\system\connect.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\connect.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\memory.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\driver.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -35,6 +29,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\filter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\memory.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\connect.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
