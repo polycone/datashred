@@ -34,6 +34,9 @@
     <ClInclude Include="src\common.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\filter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Inf Include="Datashred.inf" />

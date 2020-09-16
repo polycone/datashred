@@ -29,7 +29,6 @@ typedef NTSTATUS(FLTAPI *DSC_MESSAGE_NOTIFY) (
 );
 
 typedef struct _DS_CONNECT {
-    PFLT_FILTER Filter;
     PFLT_PORT ServerPort;
     PFLT_PORT ClientPort;
     DSC_MESSAGE_NOTIFY MessageNotifyCallback;
@@ -37,7 +36,6 @@ typedef struct _DS_CONNECT {
 } DS_CONNECT, *PDS_CONNECT;
 
 NTSTATUS DsCreateConnect(
-    _In_ PFLT_FILTER Filter,
     _In_ PCWSTR Name,
     _In_ DSC_MESSAGE_NOTIFY MessageNotifyCallback,
     _In_ PVOID Context,

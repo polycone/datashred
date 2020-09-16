@@ -56,13 +56,13 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRe
 
 static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRegistryPath) {
     UNREFERENCED_PARAMETER(pRegistryPath);
-    NTSTATUS status = FltRegisterFilter(pDriverObject, &filterRegistration, &State.Filter);
+    NTSTATUS status = FltRegisterFilter(pDriverObject, &filterRegistration, &Filter);
     if (!NT_SUCCESS(status)) {
         return status;
     }
-    status = FltStartFiltering(State.Filter);
+    status = FltStartFiltering(Filter);
     if (!NT_SUCCESS(status)) {
-        FltUnregisterFilter(State.Filter);
+        FltUnregisterFilter(Filter);
     }
     return status;
 }
@@ -70,6 +70,6 @@ static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_ST
 static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS Flags) {
     UNREFERENCED_PARAMETER(Flags);
     PAGED_CODE();
-    FltUnregisterFilter(State.Filter);
+    FltUnregisterFilter(Filter);
     return STATUS_SUCCESS;
 }
