@@ -24,3 +24,13 @@
 #define FLTFL_NONE      0
 #define NO_CALLBACK     NULL
 #define NO_CONTEXT      NULL
+
+#ifdef DBG
+#define DsDbgPrint(level, format, ...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, level, format, __VA_ARGS__)
+#define DsLogInfo(format, ...) DsDbgPrint(DPFLTR_INFO_LEVEL, DRIVER_NAME "!" __FUNCTION__ ": " format "\n", __VA_ARGS__)
+#define DsLogTrace(format, ...) DsDbgPrint(DPFLTR_TRACE_LEVEL, DRIVER_NAME "!" __FUNCTION__ ": " format "\n", __VA_ARGS__)
+#else
+#define DsDbgPrint __noop
+#define DsLogInfo __noop
+#define DsLogTrace __noop
+#endif
