@@ -20,11 +20,11 @@
     <ClCompile Include="src\system\connect.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\util\string.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\driver.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\common.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -36,6 +36,9 @@
     </ClInclude>
     <ClInclude Include="src\system\connect.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\string.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
