@@ -19,8 +19,4 @@
 #pragma once
 #include "common.h"
 
-NTSTATUS DsAllocUnicodeString(_In_ USHORT Length, _Inout_ PUNICODE_STRING *String);
-NTSTATUS DsEnsureUnicodeStringLength(_Inout_ PUNICODE_STRING String, _In_ USHORT Length);
-VOID DsFreeUnicodeString(_In_ PUNICODE_STRING String);
-
-#define EmptyUnicodeString { 0, 0, NULL }
+NTSTATUS GetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);

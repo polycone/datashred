@@ -136,6 +136,7 @@
     <ClCompile Include="src\driver.c" />
     <ClCompile Include="src\util\memory.c" />
     <ClCompile Include="src\util\string.c" />
+    <ClCompile Include="src\util\volume.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h" />
@@ -143,6 +144,7 @@
     <ClInclude Include="src\filter.h" />
     <ClInclude Include="src\util\memory.h" />
     <ClInclude Include="src\util\string.h" />
+    <ClInclude Include="src\util\volume.h" />
   </ItemGroup>
   <ItemGroup>
     <Inf Include="Datashred.inf" />

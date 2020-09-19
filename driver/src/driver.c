@@ -17,8 +17,9 @@
  */
 #include "common.h"
 #include "filter.h"
-#include "util/string.h"
+#include "util/volume.h"
 #include "util/memory.h"
+#include "util/string.h"
 
 NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
 static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
@@ -30,8 +31,6 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     _In_ DEVICE_TYPE VolumeDeviceType,
     _In_ FLT_FILESYSTEM_TYPE VolumeFilesystemType
 );
-
-static NTSTATUS GetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING *String);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
@@ -99,29 +98,11 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
         return STATUS_FLT_DO_NOT_ATTACH;
     if (VolumeFilesystemType == FLT_FSTYPE_RAW)
         return STATUS_FLT_DO_NOT_ATTACH;
-    PUNICODE_STRING name = NULL;
+    UNICODE_STRING name = EmptyUnicodeString;
     status = GetVolumeGuidName(FltObjects->Volume, &name);
     if (!NT_SUCCESS(status))
         return status;
     DsLogInfo("Attached to: %wZ", name);
-    DsMemFree(name);
-    return status;
-}
-
-static NTSTATUS GetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING *Name) {
-    ULONG bufferLength = 0;
-    NTSTATUS status = FltGetVolumeGuidName(Volume, NULL, &bufferLength);
-    if (status != STATUS_BUFFER_TOO_SMALL && !NT_SUCCESS(status))
-        return status;
-    PUNICODE_STRING name = NULL;
-    status = DsAllocUnicodeString((USHORT)bufferLength, &name);
-    if (!NT_SUCCESS(status))
-        return status;
-    status = FltGetVolumeGuidName(Volume, name, &bufferLength);
-    if (NT_SUCCESS(status)) {
-        *Name = name;
-        return status;
-    }
-    DsMemFree(name);
+    DsFreeUnicodeString(&name);
     return status;
 }
