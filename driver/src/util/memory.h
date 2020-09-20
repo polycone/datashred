@@ -19,6 +19,8 @@
 #pragma once
 #include "common.h"
 
+#define DS_DEFAULT_POOL_TAG      'pDsD'
+
 #define DsMemAllocType(type, pointer) DsMemAlloc(sizeof(type), pointer)
 
 NTSTATUS DsMemAlloc(_In_ SIZE_T Size, _Out_ PVOID *Pointer);

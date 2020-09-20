@@ -21,16 +21,29 @@
 #include <dontuse.h>
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
-#define FLTFL_NONE      0
-#define NO_CALLBACK     NULL
-#define NO_CONTEXT      NULL
+#define EMPTY_FLAGS        0
+#define EMPTY_CALLBACK     NULL
+#define EMPTY_CONTEXT      NULL
 
+/* Kernel debug messaging */
 #ifdef DBG
-#define DsDbgPrint(level, format, ...) DbgPrintEx(DPFLTR_IHVDRIVER_ID, level, format, __VA_ARGS__)
-#define DsLogInfo(format, ...) DsDbgPrint(DPFLTR_INFO_LEVEL, DRIVER_NAME "!" __FUNCTION__ ": " format "\n", __VA_ARGS__)
-#define DsLogTrace(format, ...) DsDbgPrint(DPFLTR_TRACE_LEVEL, DRIVER_NAME "!" __FUNCTION__ ": " format "\n", __VA_ARGS__)
+
+#define DsDbgPrint(level, format, ...)  DbgPrintEx(DPFLTR_IHVDRIVER_ID, level, format, __VA_ARGS__)
+
+#define LOG_PREFIX                      DRIVER_NAME "!" __FUNCTION__ ": "
+#define DsLogInfo(format, ...)          DsDbgPrint(DPFLTR_INFO_LEVEL, LOG_PREFIX format "\n", __VA_ARGS__)
+#define DsLogTrace(format, ...)         DsDbgPrint(DPFLTR_TRACE_LEVEL, LOG_PREFIX format "\n", __VA_ARGS__)
+
 #else
+
 #define DsDbgPrint __noop
 #define DsLogInfo __noop
 #define DsLogTrace __noop
+
 #endif
+
+/* Routine definitions */
+#define DSR_INIT            PAGED_CODE(); NTSTATUS status = STATUS_SUCCESS;
+#define DSR_ASSERT(op)      status = op; if (!NT_SUCCESS(status)) goto cleanup;
+#define DSR_CLEANUP         cleanup: if (!NT_SUCCESS(status))
+#define DSR_STATUS          status

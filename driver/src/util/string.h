@@ -19,8 +19,9 @@
 #pragma once
 #include "common.h"
 
-NTSTATUS DsAllocUnicodeString(_In_ USHORT Length, _Inout_ PUNICODE_STRING *String);
+NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, _In_ USHORT Length);
 NTSTATUS DsEnsureUnicodeStringLength(_Inout_ PUNICODE_STRING String, _In_ USHORT Length);
 VOID DsFreeUnicodeString(_In_ PUNICODE_STRING String);
 
 #define EmptyUnicodeString { 0, 0, NULL }
+#define DsInitUnicodeString(string) DsCreateUnicodeString(string, 0)

@@ -21,10 +21,10 @@
 #include "memory.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, GetVolumeGuidName)
+#pragma alloc_text(PAGE, DsGetVolumeGuidName)
 #endif
 
-NTSTATUS GetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
+NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
     ULONG bufferLength = 0;
     NTSTATUS status = FltGetVolumeGuidName(Volume, NULL, &bufferLength);
     if (status != STATUS_BUFFER_TOO_SMALL && !NT_SUCCESS(status)) {

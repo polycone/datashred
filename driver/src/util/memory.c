@@ -18,15 +18,13 @@
 
 #include "memory.h"
 
-#define DEFAULT_PAGED_POOL_TAG      'pPsD'
-
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsMemAlloc)
 #pragma alloc_text(PAGE, DsMemFree)
 #endif
 
 NTSTATUS DsMemAlloc(_In_ SIZE_T Size, _Out_ PVOID *Pointer) {
-    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DEFAULT_PAGED_POOL_TAG);
+    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DS_DEFAULT_POOL_TAG);
     if (pointer == NULL) {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -35,5 +33,5 @@ NTSTATUS DsMemAlloc(_In_ SIZE_T Size, _Out_ PVOID *Pointer) {
 }
 
 VOID DsMemFree(_In_ PVOID Pointer) {
-    ExFreePoolWithTag(Pointer, DEFAULT_PAGED_POOL_TAG);
+    ExFreePoolWithTag(Pointer, DS_DEFAULT_POOL_TAG);
 }

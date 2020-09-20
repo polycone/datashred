@@ -19,4 +19,6 @@
 #pragma once
 #include "common.h"
 
-NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
+typedef struct _DS_INSTANCE_CONTEXT {
+    UNICODE_STRING VolumeGuid;
+} DS_INSTANCE_CONTEXT, *PDS_INSTANCE_CONTEXT;
