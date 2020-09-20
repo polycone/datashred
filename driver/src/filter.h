@@ -19,4 +19,4 @@
 #pragma once
 #include "common.h"
 
-PFLT_FILTER Filter;
+PFLT_FILTER Filter = NULL;
