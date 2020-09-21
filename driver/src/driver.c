@@ -23,6 +23,8 @@
 #include "util/string.h"
 #include "context.h"
 
+PFLT_FILTER Filter = NULL;
+
 NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
 static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
 static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS flags);
@@ -48,7 +50,7 @@ static VOID DsFreeInstanceContext(_In_ PDS_INSTANCE_CONTEXT Context);
 
 static const FLT_CONTEXT_REGISTRATION contexts[] = {
     { FLT_INSTANCE_CONTEXT, EMPTY_FLAGS, DsContextCleanupCallback, sizeof(DS_INSTANCE_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
-    { IRP_MJ_OPERATION_END }
+    { FLT_CONTEXT_END }
 };
 
 static const FLT_OPERATION_REGISTRATION callbacks[] = {
@@ -103,6 +105,7 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 ) {
     UNREFERENCED_PARAMETER(Flags);
     DSR_INIT;
+    DsLogTrace("Trying to setup an instance. Device type: %d. Filesystem type: %d.", VolumeDeviceType, VolumeFilesystemType);
 
     if (VolumeDeviceType != FILE_DEVICE_DISK && VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
         return STATUS_FLT_DO_NOT_ATTACH;
