@@ -46,6 +46,7 @@ NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPE
         DSR_SUPPRESS(STATUS_BUFFER_OVERFLOW)
     );
     VolumeProperties->DeviceType = properties.DeviceType;
+    VolumeProperties->DeviceObjectFlags = properties.DeviceObjectFlags;
     VolumeProperties->DeviceCharacteristics = properties.DeviceCharacteristics;
     VolumeProperties->SectorSize = properties.SectorSize;
     DSR_CLEANUP;

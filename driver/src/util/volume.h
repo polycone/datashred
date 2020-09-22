@@ -21,6 +21,7 @@
 
 typedef struct _DS_VOLUME_PROPERTIES {
     DEVICE_TYPE DeviceType;
+    ULONG DeviceObjectFlags;
     ULONG DeviceCharacteristics;
     USHORT SectorSize;
 } DS_VOLUME_PROPERTIES, *PDS_VOLUME_PROPERTIES;
