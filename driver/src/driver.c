@@ -107,7 +107,7 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     DSR_INIT;
     DsLogTrace("Trying to setup an instance. D: 0x%08X | FS: 0x%08X | F: 0x%08X.", VolumeDeviceType, VolumeFilesystemType, Flags);
 
-    if (VolumeDeviceType != FILE_DEVICE_DISK && VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
+    if (VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
         return STATUS_FLT_DO_NOT_ATTACH;
     if (VolumeFilesystemType == FLT_FSTYPE_RAW)
         return STATUS_FLT_DO_NOT_ATTACH;
