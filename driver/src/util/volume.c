@@ -22,23 +22,19 @@
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsGetVolumeGuidName)
+#pragma alloc_text(PAGE, DsGetVolumeProperties)
 #endif
 
 NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
+    DSR_INIT;
     ULONG bufferLength = 0;
-    NTSTATUS status = FltGetVolumeGuidName(Volume, NULL, &bufferLength);
-    if (status != STATUS_BUFFER_TOO_SMALL && !NT_SUCCESS(status)) {
-        return status;
+    DSR_ASSERT(FltGetVolumeGuidName(Volume, NULL, &bufferLength), DSR_SUPPRESS(STATUS_BUFFER_TOO_SMALL));
+    DSR_ASSERT(DsEnsureUnicodeStringLength(Name, (USHORT)bufferLength));
+    DSR_ASSERT(FltGetVolumeGuidName(Volume, Name, &bufferLength));
+    DSR_CLEANUP {
+        DsFreeUnicodeString(Name);
     }
-    status = DsEnsureUnicodeStringLength(Name, (USHORT)bufferLength);
-    if (!NT_SUCCESS(status)) {
-        return status;
-    }
-    status = FltGetVolumeGuidName(Volume, Name, &bufferLength);
-    if (!NT_SUCCESS(status)) {
-        DsMemFree(Name);
-    }
-    return status;
+    return DSR_STATUS;
 }
 
 NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPERTIES VolumeProperties) {
