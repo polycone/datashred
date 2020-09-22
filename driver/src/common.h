@@ -42,8 +42,37 @@
 
 #endif
 
+/* Macro helpers */
+#define __VA_PASS__(x) x
+#define __GET_MACRO_2__(_1, _2, name, ...) name
+
 /* Routine definitions */
-#define DSR_INIT            PAGED_CODE(); NTSTATUS status = STATUS_SUCCESS;
-#define DSR_ASSERT(op)      status = op; if (!NT_SUCCESS(status)) goto cleanup;
-#define DSR_CLEANUP         cleanup: if (!NT_SUCCESS(status))
-#define DSR_STATUS          status
+#define DSR_INIT \
+    PAGED_CODE(); \
+    NTSTATUS status = STATUS_SUCCESS;
+
+#define __DSR_ASSERT_WITH_SUPPRESS(op, s) \
+    status = op; \
+    s; \
+    if (!NT_SUCCESS(status)) \
+        goto cleanup;
+
+#define __DSR_ASSERT(op) __DSR_ASSERT_WITH_SUPPRESS(op, )
+
+#define DSR_ASSERT(...) \
+    __VA_PASS__(__GET_MACRO_2__( \
+                __VA_ARGS__, \
+                __DSR_ASSERT_WITH_SUPPRESS, \
+                __DSR_ASSERT \
+                )(__VA_ARGS__) \
+    )
+
+#define DSR_SUPPRESS(s) \
+    if (status == s) \
+    status = STATUS_SUCCESS;
+
+#define DSR_CLEANUP \
+    cleanup: \
+    if (!NT_SUCCESS(status))
+
+#define DSR_STATUS                          status
