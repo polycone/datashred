@@ -19,4 +19,11 @@
 #pragma once
 #include "common.h"
 
+typedef struct _DS_VOLUME_PROPERTIES {
+    DEVICE_TYPE DeviceType;
+    ULONG DeviceCharacteristics;
+    USHORT SectorSize;
+} DS_VOLUME_PROPERTIES, *PDS_VOLUME_PROPERTIES;
+
 NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
+NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPERTIES VolumeProperties);

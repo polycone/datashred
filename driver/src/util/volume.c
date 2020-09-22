@@ -40,3 +40,18 @@ NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Na
     }
     return status;
 }
+
+NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPERTIES VolumeProperties) {
+    DSR_INIT;
+    ULONG bufferLength = 0;
+    FLT_VOLUME_PROPERTIES properties;
+    DSR_ASSERT(
+        FltGetVolumeProperties(Volume, &properties, sizeof(FLT_VOLUME_PROPERTIES), &bufferLength),
+        DSR_SUPPRESS(STATUS_BUFFER_OVERFLOW)
+    );
+    VolumeProperties->DeviceType = properties.DeviceType;
+    VolumeProperties->DeviceCharacteristics = properties.DeviceCharacteristics;
+    VolumeProperties->SectorSize = properties.SectorSize;
+    DSR_CLEANUP;
+    return DSR_STATUS;
+}
