@@ -148,7 +148,7 @@
     <ClInclude Include="src\util\volume.h" />
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="Datashred.inf" />
+    <Inf Include="datashred.inf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
