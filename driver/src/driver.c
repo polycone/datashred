@@ -105,7 +105,7 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 ) {
     UNREFERENCED_PARAMETER(Flags);
     DSR_INIT;
-    DsLogTrace("Trying to setup an instance. Device type: %d. Filesystem type: %d.", VolumeDeviceType, VolumeFilesystemType);
+    DsLogTrace("Trying to setup an instance. D: 0x%08X | FS: 0x%08X | F: 0x%08X.", VolumeDeviceType, VolumeFilesystemType, Flags);
 
     if (VolumeDeviceType != FILE_DEVICE_DISK && VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
         return STATUS_FLT_DO_NOT_ATTACH;
@@ -115,9 +115,7 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
     DSR_ASSERT(DsInitInstanceContext(FltObjects, &context));
 
-    DSR_CLEANUP {
-        DsFreeUnicodeString(&context->VolumeGuid);
-    };
+    DSR_CLEANUP;
     if (context != EMPTY_CONTEXT) {
         FltReleaseContext(context);
     }
@@ -136,11 +134,28 @@ static NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _In
     DSR_INIT;
     PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
     DSR_ASSERT(FltAllocateContext(Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
+
     DsInitUnicodeString(&context->VolumeGuid);
     DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &context->VolumeGuid));
+    DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &context->VolumeProperties));
+
     DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
     *Context = context;
-    DsLogInfo("Instance context created. Volume: %wZ.", &context->VolumeGuid);
+
+    DsLogInfo(
+        "Instance context created.\n"
+        "\t- Volume: %wZ\n"
+        "\t- Device type: 0x%08X\n"
+        "\t- Device object flags: 0x%08X\n"
+        "\t- Device characteristics: 0x%08X\n"
+        "\t- Sector size: %d",
+        &context->VolumeGuid,
+        context->VolumeProperties.DeviceType,
+        context->VolumeProperties.DeviceObjectFlags,
+        context->VolumeProperties.DeviceCharacteristics,
+        context->VolumeProperties.SectorSize
+    );
+
     DSR_CLEANUP {
         DsFreeInstanceContext(context);
     };
