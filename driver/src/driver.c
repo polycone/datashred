@@ -21,7 +21,7 @@
 #include "util/volume.h"
 #include "util/memory.h"
 #include "util/string.h"
-#include "context.h"
+#include "context/instance.h"
 
 PFLT_FILTER Filter = NULL;
 
@@ -37,8 +37,6 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 );
 
 static VOID FLTAPI DsContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
-static NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT *Context);
-static VOID DsFreeInstanceContext(_In_ PDS_INSTANCE_CONTEXT Context);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
@@ -115,33 +113,6 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
     DSR_ASSERT(DsInitInstanceContext(FltObjects, &context));
 
-    DSR_CLEANUP;
-    if (context != EMPTY_CONTEXT) {
-        FltReleaseContext(context);
-    }
-    return DSR_STATUS;
-}
-
-static VOID FLTAPI DsContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
-    switch (ContextType) {
-        case FLT_INSTANCE_CONTEXT:
-            DsFreeInstanceContext((PDS_INSTANCE_CONTEXT)Context);
-            break;
-    }
-}
-
-static NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT *Context) {
-    DSR_INIT;
-    PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
-    DSR_ASSERT(FltAllocateContext(Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
-
-    DsInitUnicodeString(&context->VolumeGuid);
-    DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &context->VolumeGuid));
-    DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &context->VolumeProperties));
-
-    DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
-    *Context = context;
-
     DsLogInfo(
         "Instance context created.\n"
         "\t- Volume: %wZ\n"
@@ -156,13 +127,17 @@ static NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _In
         context->VolumeProperties.SectorSize
     );
 
-    DSR_CLEANUP {
-        DsFreeInstanceContext(context);
-    };
+    DSR_CLEANUP;
     return DSR_STATUS;
 }
 
-static VOID DsFreeInstanceContext(_In_ PDS_INSTANCE_CONTEXT Context) {
-    DsLogInfo("Instance context is being cleaned up. Volume: %wZ.", &Context->VolumeGuid);
-    DsFreeUnicodeString(&Context->VolumeGuid);
+static VOID FLTAPI DsContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
+    switch (ContextType) {
+        case FLT_INSTANCE_CONTEXT: {
+                PDS_INSTANCE_CONTEXT context = (PDS_INSTANCE_CONTEXT)Context;
+                DsLogInfo("Instance context is being cleaned up. Volume: %wZ.", &context->VolumeGuid);
+                DsFreeInstanceContext(context);
+                break;
+            }
+    }
 }

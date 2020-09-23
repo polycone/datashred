@@ -135,6 +135,7 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\context\instance.c" />
     <ClCompile Include="src\system\connect.c" />
     <ClCompile Include="src\driver.c" />
     <ClCompile Include="src\util\memory.c" />
@@ -144,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="src\common.h" />
     <ClInclude Include="src\context.h" />
+    <ClInclude Include="src\context\instance.h" />
     <ClInclude Include="src\system\connect.h" />
     <ClInclude Include="src\filter.h" />
     <ClInclude Include="src\util\memory.h" />

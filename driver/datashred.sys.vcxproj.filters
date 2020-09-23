@@ -26,6 +26,9 @@
     <ClCompile Include="src\util\volume.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\context\instance.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h">
@@ -47,6 +50,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\context\instance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
