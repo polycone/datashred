@@ -36,10 +36,11 @@ typedef struct _DS_CONNECT {
 } DS_CONNECT, *PDS_CONNECT;
 
 NTSTATUS DsCreateConnect(
+    _In_ PFLT_FILTER Filter,
     _In_ PCWSTR Name,
     _In_ DSC_MESSAGE_NOTIFY MessageNotifyCallback,
     _In_ PVOID Context,
     _Out_ PDS_CONNECT *Connect
 );
 
-VOID DsFreeConnect(_In_ PDS_CONNECT Connect);
+VOID DsFreeConnect(_In_ PFLT_FILTER Filter, _In_ PDS_CONNECT Connect);

@@ -17,7 +17,6 @@
  */
 
 #include "common.h"
-#include "filter.h"
 #include "util/volume.h"
 #include "util/memory.h"
 #include "util/string.h"

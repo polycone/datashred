@@ -17,7 +17,6 @@
  */
 
 #include "connect.h"
-#include "filter.h"
 #include "../util/memory.h"
 
 #define DSC_MAX_CONNECTIONS 1
@@ -47,6 +46,7 @@ static NTSTATUS FLTAPI MessageNotifyCallback(
 #endif
 
 NTSTATUS DsCreateConnect(
+    _In_ PFLT_FILTER Filter,
     _In_ PCWSTR Name,
     _In_ DSC_MESSAGE_NOTIFY MessageNotifyCallback,
     _In_ PVOID Context,
@@ -104,7 +104,7 @@ cleanup:
     return status;
 }
 
-VOID DsFreeConnect(_In_ PDS_CONNECT Connect) {
+VOID DsFreeConnect(_In_ PFLT_FILTER Filter, _In_ PDS_CONNECT Connect) {
     if (Connect->ClientPort != NULL) {
         FltCloseClientPort(Filter, &Connect->ClientPort);
     }
