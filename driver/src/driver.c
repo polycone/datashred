@@ -22,6 +22,7 @@
 #include "util/memory.h"
 #include "util/string.h"
 #include "context/instance.h"
+#include "callback.h"
 
 PFLT_FILTER Filter = NULL;
 
@@ -36,22 +37,23 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     _In_ FLT_FILESYSTEM_TYPE VolumeFilesystemType
 );
 
-static VOID FLTAPI DsContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
+static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
 #pragma alloc_text(INIT, DsFilterLoad)
 #pragma alloc_text(PAGE, DsFilterUnload)
 #pragma alloc_text(PAGE, DsInstanceSetupCallback)
-#pragma alloc_text(PAGE, DsContextCleanupCallback)
+#pragma alloc_text(PAGE, DsInstanceContextCleanupCallback)
 #endif
 
 static const FLT_CONTEXT_REGISTRATION contexts[] = {
-    { FLT_INSTANCE_CONTEXT, EMPTY_FLAGS, DsContextCleanupCallback, sizeof(DS_INSTANCE_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
+    { FLT_INSTANCE_CONTEXT, EMPTY_FLAGS, DsInstanceContextCleanupCallback, sizeof(DS_INSTANCE_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
     { FLT_CONTEXT_END }
 };
 
 static const FLT_OPERATION_REGISTRATION callbacks[] = {
+    { IRP_MJ_CREATE, EMPTY_FLAGS, DsPreCreateCallback, DsPostCreateCallback, NULL },
     { IRP_MJ_OPERATION_END }
 };
 
@@ -131,13 +133,9 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     return DSR_STATUS;
 }
 
-static VOID FLTAPI DsContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
-    switch (ContextType) {
-        case FLT_INSTANCE_CONTEXT: {
-                PDS_INSTANCE_CONTEXT context = (PDS_INSTANCE_CONTEXT)Context;
-                DsLogInfo("Instance context is being cleaned up. Volume: %wZ.", &context->VolumeGuid);
-                DsFreeInstanceContext(context);
-                break;
-            }
-    }
+static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
+    UNREFERENCED_PARAMETER(ContextType);
+    PDS_INSTANCE_CONTEXT context = (PDS_INSTANCE_CONTEXT)Context;
+    DsLogInfo("Instance context is being cleaned up. Volume: %wZ.", &context->VolumeGuid);
+    DsFreeInstanceContext(context);
 }

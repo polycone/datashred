@@ -17,10 +17,4 @@
  */
 
 #pragma once
-#include "common.h"
-#include "util/volume.h"
-
-typedef struct _DS_INSTANCE_CONTEXT {
-    UNICODE_STRING VolumeGuid;
-    DS_VOLUME_PROPERTIES VolumeProperties;
-} DS_INSTANCE_CONTEXT, *PDS_INSTANCE_CONTEXT;
+#include "callback/create.h"

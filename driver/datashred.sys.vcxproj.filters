@@ -29,12 +29,12 @@
     <ClCompile Include="src\context\instance.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\callback\create.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\filter.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\util\memory.h">
@@ -49,10 +49,16 @@
     <ClInclude Include="src\util\volume.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\context.h">
+    <ClInclude Include="src\context\instance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\context\instance.h">
+    <ClInclude Include="src\callback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\callback\create.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
