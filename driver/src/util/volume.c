@@ -26,19 +26,19 @@
 #endif
 
 NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
-    DSR_INIT;
+    DSR_INIT(PASSIVE_LEVEL);
     ULONG bufferLength = 0;
     DSR_ASSERT(FltGetVolumeGuidName(Volume, NULL, &bufferLength), DSR_SUPPRESS(STATUS_BUFFER_TOO_SMALL));
     DSR_ASSERT(DsEnsureUnicodeStringLength(Name, (USHORT)bufferLength));
     DSR_ASSERT(FltGetVolumeGuidName(Volume, Name, &bufferLength));
-    DSR_CLEANUP {
-        DsFreeUnicodeString(Name);
-    }
+    DSR_CLEANUP_START();
+    DsFreeUnicodeString(Name);
+    DSR_CLEANUP_END();
     return DSR_STATUS;
 }
 
 NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPERTIES VolumeProperties) {
-    DSR_INIT;
+    DSR_INIT(APC_LEVEL);
     ULONG bufferLength = 0;
     FLT_VOLUME_PROPERTIES properties;
     DSR_ASSERT(
@@ -49,6 +49,6 @@ NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPE
     VolumeProperties->DeviceObjectFlags = properties.DeviceObjectFlags;
     VolumeProperties->DeviceCharacteristics = properties.DeviceCharacteristics;
     VolumeProperties->SectorSize = properties.SectorSize;
-    DSR_CLEANUP;
+    DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }

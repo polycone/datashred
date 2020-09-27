@@ -32,23 +32,31 @@
 
 #define LOG_PREFIX                      DRIVER_NAME "!" __FUNCTION__ ": "
 #define DsLogInfo(format, ...)          DsDbgPrint(DPFLTR_INFO_LEVEL, LOG_PREFIX format "\n", __VA_ARGS__)
+#define DsLogError(format, ...)         DsDbgPrint(DPFLTR_ERROR_LEVEL, LOG_PREFIX format "\n", __VA_ARGS__)
 #define DsLogTrace(format, ...)         DsDbgPrint(DPFLTR_TRACE_LEVEL, LOG_PREFIX format "\n", __VA_ARGS__)
 
 #else
 
-#define DsDbgPrint __noop
-#define DsLogInfo __noop
-#define DsLogTrace __noop
+#define DsLogInfo   NOP_FUNCTION
+#define DsLogError  NOP_FUNCTION
+#define DsLogTrace  NOP_FUNCTION
 
-#endif
+#endif // DBG
 
 /* Macro helpers */
 #define __VA_PASS__(x) x
 #define __GET_MACRO_2__(_1, _2, name, ...) name
 
 /* Routine definitions */
-#define DSR_INIT \
-    PAGED_CODE(); \
+
+#ifdef DBG
+#define __IRQL_ASSERT(irql) NT_ASSERT(KeGetCurrentIrql() <= irql)
+#else
+#define __IRQL_ASSERT(irql) NOP_FUNCTION
+#endif // DBG
+
+#define DSR_INIT(irql) \
+    __IRQL_ASSERT(irql); \
     NTSTATUS status = STATUS_SUCCESS;
 
 #define __DSR_ASSERT_WITH_SUPPRESS(op, s) \
@@ -71,8 +79,13 @@
     if (status == s) \
     status = STATUS_SUCCESS;
 
-#define DSR_CLEANUP \
+#define DSR_CLEANUP_START() \
     cleanup: \
-    if (!NT_SUCCESS(status))
+    if (!NT_SUCCESS(status)) { \
+        DsLogError("Unexpected error: 0x%08X", status);
 
-#define DSR_STATUS                          status
+#define DSR_CLEANUP_END()     }
+
+#define DSR_CLEANUP_EMPTY()   DSR_CLEANUP_START() DSR_CLEANUP_END()
+
+#define DSR_STATUS          status

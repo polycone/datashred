@@ -80,18 +80,20 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRe
 
 static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRegistryPath) {
     UNREFERENCED_PARAMETER(pRegistryPath);
-    DSR_INIT;
+    DSR_INIT(APC_LEVEL);
     DSR_ASSERT(FltRegisterFilter(pDriverObject, &filterRegistration, &Filter));
     DSR_ASSERT(FltStartFiltering(Filter));
-    DSR_CLEANUP {
-        if (Filter != NULL) FltUnregisterFilter(Filter);
-    };
+    DSR_CLEANUP_START();
+    if (Filter != NULL) {
+        FltUnregisterFilter(Filter);
+    }
+    DSR_CLEANUP_END();
     return DSR_STATUS;
 }
 
 static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS Flags) {
     UNREFERENCED_PARAMETER(Flags);
-    DSR_INIT;
+    DSR_INIT(APC_LEVEL);
     FltUnregisterFilter(Filter);
     return DSR_STATUS;
 }
@@ -103,7 +105,7 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     _In_ FLT_FILESYSTEM_TYPE VolumeFilesystemType
 ) {
     UNREFERENCED_PARAMETER(Flags);
-    DSR_INIT;
+    DSR_INIT(PASSIVE_LEVEL);
     DsLogTrace("Trying to setup an instance. D: 0x%08X | FS: 0x%08X | F: 0x%08X.", VolumeDeviceType, VolumeFilesystemType, Flags);
 
     if (VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
@@ -127,8 +129,7 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
         context->VolumeProperties.DeviceCharacteristics,
         context->VolumeProperties.SectorSize
     );
-
-    DSR_CLEANUP;
+    DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }
 

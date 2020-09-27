@@ -25,7 +25,7 @@
 #endif
 
 NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT *Context) {
-    DSR_INIT;
+    DSR_INIT(PASSIVE_LEVEL);
     PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
     DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
 
@@ -36,9 +36,10 @@ NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PD
     DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
     *Context = context;
 
-    DSR_CLEANUP {
-        DsFreeInstanceContext(context);
-    };
+    DSR_CLEANUP_START();
+    DsFreeInstanceContext(context);
+    DSR_CLEANUP_END();
+
     if (context != EMPTY_CONTEXT) {
         FltReleaseContext(context);
     }
