@@ -24,24 +24,14 @@
 #pragma alloc_text(PAGE, DsFreeInstanceContext)
 #endif
 
-NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT *Context) {
+NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT Context) {
     DSR_INIT(PASSIVE_LEVEL);
-    PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
-    DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
-
-    DsInitUnicodeString(&context->VolumeGuid);
-    DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &context->VolumeGuid));
-    DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &context->VolumeProperties));
-    DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
-    *Context = context;
-
+    DsInitUnicodeString(&Context->VolumeGuid);
+    DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &Context->VolumeGuid));
+    DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &Context->VolumeProperties));
     DSR_CLEANUP_START();
-    DsFreeInstanceContext(context);
+    DsFreeInstanceContext(Context);
     DSR_CLEANUP_END();
-
-    if (context != EMPTY_CONTEXT) {
-        FltReleaseContext(context);
-    }
     return DSR_STATUS;
 }
 

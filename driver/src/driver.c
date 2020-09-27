@@ -117,7 +117,9 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
         return STATUS_FLT_DO_NOT_ATTACH;
 
     PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
-    DSR_ASSERT(DsInitInstanceContext(FltObjects, &context));
+    DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
+    DSR_ASSERT(DsInitInstanceContext(FltObjects, context));
+    DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
 
     DsLogInfo(
         "Instance context created.\n"
@@ -130,6 +132,9 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     );
 
     DSR_CLEANUP_EMPTY();
+    if (context != EMPTY_CONTEXT) {
+        FltReleaseContext(context);
+    }
     return DSR_STATUS;
 }
 

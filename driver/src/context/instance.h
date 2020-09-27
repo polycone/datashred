@@ -25,5 +25,5 @@ typedef struct _DS_INSTANCE_CONTEXT {
     DS_VOLUME_PROPERTIES VolumeProperties;
 } DS_INSTANCE_CONTEXT, *PDS_INSTANCE_CONTEXT;
 
-NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT *Context);
+NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT Context);
 VOID DsFreeInstanceContext(_In_ PDS_INSTANCE_CONTEXT Context);
