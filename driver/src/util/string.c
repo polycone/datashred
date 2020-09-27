@@ -26,36 +26,34 @@
 #endif
 
 NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, _In_ USHORT Length) {
+    DSR_INIT(APC_LEVEL);
     PVOID buffer = NULL;
     if (Length > 0) {
-        NTSTATUS status = DsMemAlloc(Length, &buffer);
-        if (!NT_SUCCESS(status)) {
-            return status;
-        }
+        DSR_ASSERT(DsMemAlloc(Length, &buffer));
     }
     String->Buffer = (PWCH)buffer;
     String->Length = 0;
     String->MaximumLength = Length;
-    return STATUS_SUCCESS;
+    DSR_CLEANUP_EMPTY();
+    return DSR_STATUS;
 }
 
 NTSTATUS DsEnsureUnicodeStringLength(_Inout_ PUNICODE_STRING String, _In_ USHORT Length) {
+    DSR_INIT(APC_LEVEL);
     if (String->MaximumLength >= Length) {
         String->Length = 0;
-        return STATUS_SUCCESS;
+        return DSR_STATUS;
     }
     PVOID buffer = NULL;
-    NTSTATUS status = DsMemAlloc(Length, &buffer);
-    if (!NT_SUCCESS(status)) {
-        return status;
-    }
+    DSR_ASSERT(DsMemAlloc(Length, &buffer));
     if (String->Buffer != NULL) {
         DsMemFree(String->Buffer);
     }
     String->Buffer = (PWCH)buffer;
     String->Length = 0;
     String->MaximumLength = Length;
-    return STATUS_SUCCESS;
+    DSR_CLEANUP_EMPTY();
+    return DSR_STATUS;
 }
 
 VOID DsFreeUnicodeString(_In_ PUNICODE_STRING String) {
