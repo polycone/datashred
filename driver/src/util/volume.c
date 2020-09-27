@@ -45,9 +45,7 @@ NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPE
         FltGetVolumeProperties(Volume, &properties, sizeof(FLT_VOLUME_PROPERTIES), &bufferLength),
         DSR_SUPPRESS(STATUS_BUFFER_OVERFLOW)
     );
-    VolumeProperties->DeviceType = properties.DeviceType;
-    VolumeProperties->DeviceObjectFlags = properties.DeviceObjectFlags;
-    VolumeProperties->DeviceCharacteristics = properties.DeviceCharacteristics;
+    DSR_ASSERT(FltGetFileSystemType(Volume, &VolumeProperties->FilesystemType));
     VolumeProperties->SectorSize = properties.SectorSize;
     DSR_CLEANUP_EMPTY();
     return DSR_STATUS;

@@ -20,9 +20,7 @@
 #include "common.h"
 
 typedef struct _DS_VOLUME_PROPERTIES {
-    DEVICE_TYPE DeviceType;
-    ULONG DeviceObjectFlags;
-    ULONG DeviceCharacteristics;
+    FLT_FILESYSTEM_TYPE FilesystemType;
     USHORT SectorSize;
 } DS_VOLUME_PROPERTIES, *PDS_VOLUME_PROPERTIES;
 

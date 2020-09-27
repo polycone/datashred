@@ -32,7 +32,6 @@ NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PD
     DsInitUnicodeString(&context->VolumeGuid);
     DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &context->VolumeGuid));
     DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &context->VolumeProperties));
-
     DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
     *Context = context;
 

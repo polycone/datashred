@@ -106,7 +106,10 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 ) {
     UNREFERENCED_PARAMETER(Flags);
     DSR_INIT(PASSIVE_LEVEL);
-    DsLogTrace("Trying to setup an instance. D: 0x%08X | FS: 0x%08X | F: 0x%08X.", VolumeDeviceType, VolumeFilesystemType, Flags);
+    DsLogTrace(
+        "Trying to setup an instance. DE: 0x%08X, FS: 0x%08X, FL: 0x%08X.",
+        VolumeDeviceType, VolumeFilesystemType, Flags
+    );
 
     if (VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
         return STATUS_FLT_DO_NOT_ATTACH;
@@ -118,17 +121,14 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 
     DsLogInfo(
         "Instance context created.\n"
-        "\t- Volume: %wZ\n"
-        "\t- Device type: 0x%08X\n"
-        "\t- Device object flags: 0x%08X\n"
-        "\t- Device characteristics: 0x%08X\n"
-        "\t- Sector size: %d",
+        "  - Volume: %wZ\n"
+        "  - Filesystem: %d\n"
+        "  - Sector size: %d",
         &context->VolumeGuid,
-        context->VolumeProperties.DeviceType,
-        context->VolumeProperties.DeviceObjectFlags,
-        context->VolumeProperties.DeviceCharacteristics,
+        context->VolumeProperties.FilesystemType,
         context->VolumeProperties.SectorSize
     );
+
     DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }
@@ -136,6 +136,10 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
     UNREFERENCED_PARAMETER(ContextType);
     PDS_INSTANCE_CONTEXT context = (PDS_INSTANCE_CONTEXT)Context;
-    DsLogInfo("Instance context is being cleaned up. Volume: %wZ.", &context->VolumeGuid);
+    DsLogInfo(
+        "Instance context is being cleaned up.\n"
+        "  - Volume: %wZ.",
+        &context->VolumeGuid
+    );
     DsFreeInstanceContext(context);
 }
