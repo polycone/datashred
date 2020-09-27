@@ -17,9 +17,6 @@
     <ClCompile Include="src\util\memory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\system\connect.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\util\string.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -38,9 +35,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\util\memory.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\system\connect.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\util\string.h">
