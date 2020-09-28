@@ -86,6 +86,6 @@
 
 #define DSR_CLEANUP_END()     }
 
-#define DSR_CLEANUP_EMPTY()   DSR_CLEANUP_START() DSR_CLEANUP_END()
-
-#define DSR_STATUS          status
+#define DSR_CLEANUP_EMPTY()     DSR_CLEANUP_START() DSR_CLEANUP_END()
+#define DSR_STATUS              status
+#define DSR_SUCCESS             NT_SUCCESS(status)
