@@ -59,11 +59,13 @@
     __IRQL_ASSERT(irql); \
     NTSTATUS status = STATUS_SUCCESS;
 
+#define DSR_CLEANUP() goto cleanup;
+
 #define __DSR_ASSERT_WITH_SUPPRESS(op, s) \
     status = op; \
     s; \
     if (!NT_SUCCESS(status)) \
-        goto cleanup;
+        DSR_CLEANUP();
 
 #define __DSR_ASSERT(op) __DSR_ASSERT_WITH_SUPPRESS(op, )
 

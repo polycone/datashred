@@ -17,11 +17,16 @@
  */
 
 #include "create.h"
+#include "context/stream.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsPreCreateCallback)
 #pragma alloc_text(PAGE, DsPostCreateCallback)
 #endif
+
+static DECLARE_CONST_UNICODE_STRING(DataStreamTypeName, L"$DATA");
+
+static BOOLEAN IsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo);
 
 FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     _Inout_ PFLT_CALLBACK_DATA Data,
@@ -39,8 +44,8 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     if (FlagOn(Data->Iopb->TargetFileObject->Flags, FO_VOLUME_OPEN))
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
 
-    PFLT_FILE_NAME_INFORMATION filenameInfo = NULL;
-    DSR_ASSERT(FltGetFileNameInformation(Data, FLT_FILE_NAME_OPENED, &filenameInfo));
+    PFLT_FILE_NAME_INFORMATION fileNameInfo = NULL;
+    DSR_ASSERT(FltGetFileNameInformation(Data, FLT_FILE_NAME_OPENED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP, &fileNameInfo));
 
     ULONG disposition = Data->Iopb->Parameters.Create.Options >> 24;
     if (disposition == FILE_SUPERSEDE ||
@@ -51,10 +56,10 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
         // TODO: If everything was fine process the file.
     }
 
-    *CompletionContext = filenameInfo;
+    *CompletionContext = fileNameInfo;
     DSR_CLEANUP_START();
-    if (filenameInfo != NULL) {
-        FltReleaseFileNameInformation(filenameInfo);
+    if (fileNameInfo != NULL) {
+        FltReleaseFileNameInformation(fileNameInfo);
     }
     Data->IoStatus.Status = DSR_STATUS;
     DSR_CLEANUP_END();
@@ -68,23 +73,82 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     _In_ PVOID CompletionContext,
     _In_ FLT_POST_OPERATION_FLAGS Flags
 ) {
-    UNREFERENCED_PARAMETER(Flags);
     DSR_INIT(PASSIVE_LEVEL);
 
-    if (!NT_SUCCESS(Data->IoStatus.Status)) {
-        return FLT_POSTOP_FINISHED_PROCESSING;
+    /*
+        Ignore processing in case of:
+          - Draining state
+          - Invalid I/O status
+          - Reparse point
+          - File is a directory
+          - Non-data stream type
+    */
+
+    PFLT_FILE_NAME_INFORMATION fileNameInfo = (PFLT_FILE_NAME_INFORMATION)CompletionContext;
+    PDS_STREAM_CONTEXT streamContext = NULL;
+
+    if (FlagOn(Flags, FLTFL_POST_OPERATION_DRAINING)) {
+        DSR_CLEANUP();
     }
 
-    PFLT_FILE_NAME_INFORMATION filenameInfo = (PFLT_FILE_NAME_INFORMATION)CompletionContext;
+    if (!NT_SUCCESS(Data->IoStatus.Status) || Data->IoStatus.Status == STATUS_REPARSE) {
+        DSR_CLEANUP();
+    }
+
     FILE_STANDARD_INFORMATION fileStandardInfo;
     DSR_ASSERT(FltQueryInformationFile(FltObjects->Instance, FltObjects->FileObject, &fileStandardInfo, sizeof(FILE_STANDARD_INFORMATION), FileStandardInformation, NULL));
     if (fileStandardInfo.Directory) {
-        return FLT_POSTOP_FINISHED_PROCESSING;
+        DSR_CLEANUP();
     }
 
-    DsLogInfo("Flie opened: %wZ", &filenameInfo->Name);
+    DSR_ASSERT(FltParseFileNameInformation(fileNameInfo));
+    if (!IsDataStream(fileNameInfo)) {
+        DSR_CLEANUP();
+    }
 
-    DSR_CLEANUP_EMPTY();
-    FltReleaseFileNameInformation(filenameInfo);
+    BOOLEAN streamContextSupported = FltSupportsStreamContexts(FltObjects->FileObject);
+    if (!streamContextSupported) {
+        // TODO: Set stream context not supported status.
+        DSR_CLEANUP();
+    }
+
+    DSR_ASSERT(
+        FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &streamContext),
+        DSR_SUPPRESS(STATUS_NOT_FOUND)
+    );
+    if (streamContext == NULL) {
+        // TODO: Setup a stream context
+    }
+
+    // TODO: Increase file handles count
+
+    DsLogTrace("Flie opened: %wZ", &fileNameInfo->Name);
+
+    DSR_CLEANUP_START();
+    // TODO: Use FltSendMessage to signal user-mode agent that a file cannot be processed.
+    // TODO: Depening on an agent response try to call FltCancelFileOpen or just finish processing.
+    DSR_CLEANUP_END();
+
+    FltReleaseFileNameInformation(fileNameInfo);
     return FLT_POSTOP_FINISHED_PROCESSING;
+}
+
+static BOOLEAN IsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo) {
+    PUNICODE_STRING streamName = &FileNameInfo->Stream;
+    if (streamName->Length == 0) {
+        return TRUE;
+    }
+    int typeNameIndex = -1;
+    for (int i = (streamName->Length / sizeof(WCHAR)) - 1; i >= 0; --i) {
+        if (streamName->Buffer[i] == L':') {
+            typeNameIndex = i + 1;
+            break;
+        }
+    }
+    if (typeNameIndex == 1) {
+        return TRUE;
+    }
+    USHORT typeNameLength = streamName->Length - (USHORT)typeNameIndex * sizeof(WCHAR);
+    UNICODE_STRING typeName = { typeNameLength, typeNameLength, &streamName->Buffer[typeNameIndex] };
+    return RtlCompareUnicodeString(&typeName, &DataStreamTypeName, TRUE) == 0;
 }
