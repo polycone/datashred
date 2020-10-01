@@ -17,3 +17,21 @@
  */
 
 #include "stream.h"
+#include "util/string.h"
+
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text(PAGE, DsInitStreamContext)
+#pragma alloc_text(PAGE, DsFreeStreamContext)
+#endif
+
+NTSTATUS DsInitStreamContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_STREAM_CONTEXT Context) {
+    DSR_INIT(APC_LEVEL);
+    DSR_ASSERT(DsCreateUnicodeString(&Context->FileName, FileNameInfo->Name.Length));
+    RtlCopyUnicodeString(&Context->FileName, &FileNameInfo->Name);
+    DSR_CLEANUP_EMPTY();
+    return DSR_STATUS;
+}
+
+VOID DsFreeStreamContext(PDS_STREAM_CONTEXT Context) {
+    DsFreeUnicodeString(&Context->FileName);
+}

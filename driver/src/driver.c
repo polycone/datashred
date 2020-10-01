@@ -21,6 +21,7 @@
 #include "util/memory.h"
 #include "util/string.h"
 #include "context/instance.h"
+#include "context/stream.h"
 #include "callback.h"
 
 PFLT_FILTER Filter = NULL;
@@ -37,6 +38,7 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 );
 
 static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
+static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
@@ -44,10 +46,12 @@ static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _
 #pragma alloc_text(PAGE, DsFilterUnload)
 #pragma alloc_text(PAGE, DsInstanceSetupCallback)
 #pragma alloc_text(PAGE, DsInstanceContextCleanupCallback)
+#pragma alloc_text(PAGE, DsStreamContextCleanupCallback)
 #endif
 
 static const FLT_CONTEXT_REGISTRATION contexts[] = {
     { FLT_INSTANCE_CONTEXT, EMPTY_FLAGS, DsInstanceContextCleanupCallback, sizeof(DS_INSTANCE_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
+    { FLT_STREAM_CONTEXT, EMPTY_FLAGS, DsStreamContextCleanupCallback, sizeof(DS_STREAM_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
     { FLT_CONTEXT_END }
 };
 
@@ -147,4 +151,11 @@ static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _
         &context->VolumeGuid
     );
     DsFreeInstanceContext(context);
+}
+
+static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
+    UNREFERENCED_PARAMETER(ContextType);
+    PDS_STREAM_CONTEXT context = (PDS_STREAM_CONTEXT)Context;
+    DsLogTrace("Stream context is being cleaned up. File name: %wZ.", &context->FileName);
+    DsFreeStreamContext(context);
 }

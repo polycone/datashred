@@ -61,11 +61,14 @@
 
 #define DSR_CLEANUP() goto cleanup;
 
+#define DSR_CLEANUP_ON_FAIL() \
+    if (!NT_SUCCESS(status)) \
+        DSR_CLEANUP();
+
 #define __DSR_ASSERT_WITH_SUPPRESS(op, s) \
     status = op; \
     s; \
-    if (!NT_SUCCESS(status)) \
-        DSR_CLEANUP();
+    DSR_CLEANUP_ON_FAIL();
 
 #define __DSR_ASSERT(op) __DSR_ASSERT_WITH_SUPPRESS(op, )
 

@@ -85,7 +85,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     */
 
     PFLT_FILE_NAME_INFORMATION fileNameInfo = (PFLT_FILE_NAME_INFORMATION)CompletionContext;
-    PDS_STREAM_CONTEXT streamContext = NULL;
+    PDS_STREAM_CONTEXT streamContext = NULL_CONTEXT;
 
     if (FlagOn(Flags, FLTFL_POST_OPERATION_DRAINING)) {
         DSR_CLEANUP();
@@ -116,19 +116,33 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
         FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &streamContext),
         DSR_SUPPRESS(STATUS_NOT_FOUND)
     );
-    if (streamContext == NULL) {
-        // TODO: Setup a stream context
+    if (streamContext == NULL_CONTEXT) {
+        DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_STREAM_CONTEXT, sizeof(DS_STREAM_CONTEXT), PagedPool, &streamContext));
+        DSR_ASSERT(DsInitStreamContext(fileNameInfo, streamContext));
+        PDS_STREAM_CONTEXT oldStreamContext;
+        DSR_ASSERT(
+            FltSetStreamContext(FltObjects->Instance, FltObjects->FileObject, FLT_SET_CONTEXT_KEEP_IF_EXISTS, streamContext, &oldStreamContext),
+            DSR_SUPPRESS(STATUS_FLT_CONTEXT_ALREADY_DEFINED)
+        );
+        if (oldStreamContext != NULL_CONTEXT) {
+            DsLogTrace("Stream context concurrent initialization detected.");
+            FltReleaseContext(streamContext);
+            streamContext = oldStreamContext;
+        }
     }
 
     // TODO: Increase file handles count
 
-    DsLogTrace("Flie opened: %wZ", &fileNameInfo->Name);
+    DsLogTrace("File opened: %wZ", &fileNameInfo->Name);
 
     DSR_CLEANUP_START();
     // TODO: Use FltSendMessage to signal user-mode agent that a file cannot be processed.
     // TODO: Depening on an agent response try to call FltCancelFileOpen or just finish processing.
     DSR_CLEANUP_END();
 
+    if (streamContext != NULL_CONTEXT) {
+        FltReleaseContext(streamContext);
+    }
     FltReleaseFileNameInformation(fileNameInfo);
     return FLT_POSTOP_FINISHED_PROCESSING;
 }
