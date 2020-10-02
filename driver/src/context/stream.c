@@ -28,6 +28,7 @@ NTSTATUS DsInitStreamContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inou
     DSR_INIT(APC_LEVEL);
     DSR_ASSERT(DsCreateUnicodeString(&Context->FileName, FileNameInfo->Name.Length));
     RtlCopyUnicodeString(&Context->FileName, &FileNameInfo->Name);
+    Context->HandleCount = 0;
     DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }

@@ -18,15 +18,12 @@
 
 #include "create.h"
 #include "context/stream.h"
+#include "util/filename.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsPreCreateCallback)
 #pragma alloc_text(PAGE, DsPostCreateCallback)
 #endif
-
-static DECLARE_CONST_UNICODE_STRING(DataStreamTypeName, L"$DATA");
-
-static BOOLEAN IsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo);
 
 FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     _Inout_ PFLT_CALLBACK_DATA Data,
@@ -102,7 +99,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     }
 
     DSR_ASSERT(FltParseFileNameInformation(fileNameInfo));
-    if (!IsDataStream(fileNameInfo)) {
+    if (!DsIsDataStream(fileNameInfo)) {
         DSR_CLEANUP();
     }
 
@@ -131,9 +128,8 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
         }
     }
 
-    // TODO: Increase file handles count
-
-    DsLogTrace("File opened: %wZ", &fileNameInfo->Name);
+    InterlockedIncrement(&streamContext->HandleCount);
+    DsLogTrace("File opened [H: %d]: %wZ", streamContext->HandleCount, &streamContext->FileName);
 
     DSR_CLEANUP_START();
     // TODO: Use FltSendMessage to signal user-mode agent that a file cannot be processed.
@@ -145,24 +141,4 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     }
     FltReleaseFileNameInformation(fileNameInfo);
     return FLT_POSTOP_FINISHED_PROCESSING;
-}
-
-static BOOLEAN IsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo) {
-    PUNICODE_STRING streamName = &FileNameInfo->Stream;
-    if (streamName->Length == 0) {
-        return TRUE;
-    }
-    int typeNameIndex = -1;
-    for (int i = (streamName->Length / sizeof(WCHAR)) - 1; i >= 0; --i) {
-        if (streamName->Buffer[i] == L':') {
-            typeNameIndex = i + 1;
-            break;
-        }
-    }
-    if (typeNameIndex == 1) {
-        return TRUE;
-    }
-    USHORT typeNameLength = streamName->Length - (USHORT)typeNameIndex * sizeof(WCHAR);
-    UNICODE_STRING typeName = { typeNameLength, typeNameLength, &streamName->Buffer[typeNameIndex] };
-    return RtlCompareUnicodeString(&typeName, &DataStreamTypeName, TRUE) == 0;
 }

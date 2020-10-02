@@ -32,6 +32,12 @@
     <ClCompile Include="src\context\stream.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\util\filename.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\callback\cleanup.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h">
@@ -56,6 +62,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\context\stream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\filename.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\callback\cleanup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

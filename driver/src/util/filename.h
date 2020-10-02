@@ -17,5 +17,6 @@
  */
 
 #pragma once
-#include "callback/create.h"
-#include "callback/cleanup.h"
+#include "common.h"
+
+BOOLEAN DsIsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo);

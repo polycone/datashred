@@ -135,20 +135,24 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\callback\cleanup.c" />
     <ClCompile Include="src\callback\create.c" />
     <ClCompile Include="src\context\instance.c" />
     <ClCompile Include="src\context\stream.c" />
     <ClCompile Include="src\driver.c" />
+    <ClCompile Include="src\util\filename.c" />
     <ClCompile Include="src\util\memory.c" />
     <ClCompile Include="src\util\string.c" />
     <ClCompile Include="src\util\volume.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\callback.h" />
+    <ClInclude Include="src\callback\cleanup.h" />
     <ClInclude Include="src\callback\create.h" />
     <ClInclude Include="src\common.h" />
     <ClInclude Include="src\context\instance.h" />
     <ClInclude Include="src\context\stream.h" />
+    <ClInclude Include="src\util\filename.h" />
     <ClInclude Include="src\util\memory.h" />
     <ClInclude Include="src\util\string.h" />
     <ClInclude Include="src\util\volume.h" />

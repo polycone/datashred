@@ -21,6 +21,7 @@
 
 typedef struct _DS_STREAM_CONTEXT {
     UNICODE_STRING FileName;
+    volatile LONG HandleCount;
 } DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
 
 NTSTATUS DsInitStreamContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_STREAM_CONTEXT Context);
