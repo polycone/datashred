@@ -41,8 +41,14 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
     DSR_CLEANUP_ON_FAIL();
 
     InterlockedDecrement(&streamContext->HandleCount);
+    if (streamContext->FileContext != NULL) {
+        InterlockedDecrement(&streamContext->FileContext->HandleCount);
+    }
 
-    DsLogTrace("File closed: %wZ", &streamContext->FileName);
+    if (streamContext->FileContext != NULL) {
+        DsLogTrace("Cleanup. File: %wZ. Handles: %d.", &streamContext->FileContext->FileName, streamContext->FileContext->HandleCount);
+    }
+    DsLogTrace("Cleanup. Stream: %wZ. Handles: %d.", &streamContext->FileName, streamContext->HandleCount);
 
     if (streamContext->HandleCount == 0) {
         // TODO: Process a file when evaluated handle count reaches zero.

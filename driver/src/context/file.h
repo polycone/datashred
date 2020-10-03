@@ -18,23 +18,12 @@
 
 #pragma once
 #include "common.h"
-#include "file.h"
-#include "instance.h"
+#include "util/string.h"
 
-typedef struct _DS_STREAM_CONTEXT {
-    PDS_INSTANCE_CONTEXT InstanceContext;
-    PDS_FILE_CONTEXT FileContext;
+typedef struct _DS_FILE_CONTEXT {
     UNICODE_STRING FileName;
     volatile LONG HandleCount;
-    struct {
-        BOOLEAN DefaultStream : 1;
-    };
-} DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
+} DS_FILE_CONTEXT, *PDS_FILE_CONTEXT;
 
-NTSTATUS DsInitStreamContext(
-    _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
-    _In_ PDS_INSTANCE_CONTEXT instanceContext,
-    _In_opt_ PDS_FILE_CONTEXT fileContext,
-    _Inout_ PDS_STREAM_CONTEXT StreamContext
-);
-VOID DsFreeStreamContext(PDS_STREAM_CONTEXT Context);
+NTSTATUS DsInitFileContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_FILE_CONTEXT Context);
+VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT Context);

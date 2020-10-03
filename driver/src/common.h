@@ -20,6 +20,8 @@
 #include <fltKernel.h>
 #include <dontuse.h>
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
+#pragma warning(disable:4214) // Enable custom bit fields type
+#pragma warning(disable:4201) // Enable nameless structs/unions
 
 #define EMPTY_FLAGS        0
 #define EMPTY_CALLBACK     NULL

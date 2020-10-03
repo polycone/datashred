@@ -20,3 +20,4 @@
 #include "common.h"
 
 BOOLEAN DsIsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo);
+BOOLEAN DsIsDefaultStream(PFLT_FILE_NAME_INFORMATION FileNameInfo);

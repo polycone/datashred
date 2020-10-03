@@ -16,25 +16,23 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
-#include "common.h"
 #include "file.h"
-#include "instance.h"
 
-typedef struct _DS_STREAM_CONTEXT {
-    PDS_INSTANCE_CONTEXT InstanceContext;
-    PDS_FILE_CONTEXT FileContext;
-    UNICODE_STRING FileName;
-    volatile LONG HandleCount;
-    struct {
-        BOOLEAN DefaultStream : 1;
-    };
-} DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text(PAGE, DsInitFileContext)
+#pragma alloc_text(PAGE, DsFreeFileContext)
+#endif
 
-NTSTATUS DsInitStreamContext(
-    _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
-    _In_ PDS_INSTANCE_CONTEXT instanceContext,
-    _In_opt_ PDS_FILE_CONTEXT fileContext,
-    _Inout_ PDS_STREAM_CONTEXT StreamContext
-);
-VOID DsFreeStreamContext(PDS_STREAM_CONTEXT Context);
+NTSTATUS DsInitFileContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_FILE_CONTEXT Context) {
+    DSR_INIT(APC_LEVEL);
+    USHORT fileNameLength = FileNameInfo->Name.Length - FileNameInfo->Stream.Length;
+    DSR_ASSERT(DsCreateUnicodeString(&Context->FileName, fileNameLength));
+    RtlCopyUnicodeString(&Context->FileName, &FileNameInfo->Name);
+    Context->HandleCount = 0;
+    DSR_CLEANUP_EMPTY();
+    return DSR_STATUS;
+}
+
+VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT Context) {
+    DsFreeUnicodeString(&Context->FileName);
+}
