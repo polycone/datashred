@@ -28,6 +28,7 @@ typedef struct _DS_STREAM_CONTEXT {
     volatile LONG HandleCount;
     struct {
         BOOLEAN DefaultStream : 1;
+        BOOLEAN DeleteOnClose : 1;
     };
 } DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
 
@@ -37,4 +38,5 @@ NTSTATUS DsInitStreamContext(
     _In_opt_ PDS_FILE_CONTEXT fileContext,
     _Inout_ PDS_STREAM_CONTEXT StreamContext
 );
-VOID DsFreeStreamContext(PDS_STREAM_CONTEXT Context);
+VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context);
+VOID DsMarkStreamAsDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context);

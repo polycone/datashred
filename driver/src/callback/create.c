@@ -128,6 +128,9 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
         DsLogTrace("Create. File: %wZ. Count: %d.", &FileContext->FileName, FileContext->HandleCount);
     }
 
+    if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DELETE_ON_CLOSE))
+        DsMarkStreamAsDeleteOnClose(StreamContext);
+
     DSR_CLEANUP_START();
     // TODO: Check for STATUS_STREAM_CONTEXT_NOT_SUPPORTED
     // TODO: Use FltSendMessage to signal user-mode agent that a file cannot be processed.
