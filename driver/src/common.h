@@ -57,38 +57,39 @@
 #define __IRQL_ASSERT(irql) NOP_FUNCTION
 #endif // DBG
 
-#define DSR_INIT(irql) \
-    __IRQL_ASSERT(irql); \
+#define DSR_INIT(irql)                \
+    __IRQL_ASSERT(irql);              \
     NTSTATUS status = STATUS_SUCCESS;
 
 #define DSR_CLEANUP() goto cleanup;
+#define DSR_RESET() status = STATUS_SUCCESS;
 
 #define DSR_CLEANUP_ON_FAIL() \
-    if (!NT_SUCCESS(status)) \
+    if (!NT_SUCCESS(status))  \
         DSR_CLEANUP();
 
 #define __DSR_ASSERT_WITH_SUPPRESS(op, s) \
-    status = op; \
-    s; \
+    status = op;                          \
+    s;                                    \
     DSR_CLEANUP_ON_FAIL();
 
 #define __DSR_ASSERT(op) __DSR_ASSERT_WITH_SUPPRESS(op, )
 
-#define DSR_ASSERT(...) \
-    __VA_PASS__(__GET_MACRO_2__( \
-                __VA_ARGS__, \
+#define DSR_ASSERT(...)                     \
+    __VA_PASS__(__GET_MACRO_2__(            \
+                __VA_ARGS__,                \
                 __DSR_ASSERT_WITH_SUPPRESS, \
-                __DSR_ASSERT \
-                )(__VA_ARGS__) \
+                __DSR_ASSERT                \
+                )(__VA_ARGS__)              \
     )
 
-#define DSR_SUPPRESS(s) \
-    if (status == s) \
+#define DSR_SUPPRESS(s)         \
+    if (status == s)            \
     status = STATUS_SUCCESS;
 
-#define DSR_CLEANUP_START() \
-    cleanup: \
-    if (!NT_SUCCESS(status)) { \
+#define DSR_CLEANUP_START()                              \
+    cleanup:                                             \
+    if (!NT_SUCCESS(status)) {                           \
         DsLogError("Unexpected error: 0x%08X", status);
 
 #define DSR_CLEANUP_END()     }
@@ -96,3 +97,30 @@
 #define DSR_CLEANUP_EMPTY()     DSR_CLEANUP_START() DSR_CLEANUP_END()
 #define DSR_STATUS              status
 #define DSR_SUCCESS             NT_SUCCESS(status)
+
+#define DSR_DECLARE(var, type)          \
+    type var;                           \
+    RtlZeroMemory(&var, sizeof(type));
+
+/* Status codes macros */
+#define BUILD_NTSTATUS(severity, facility, code) ((NTSTATUS)((severity << 30) | 0x20000000 | (facility << 16) | code))
+
+// Filter facility
+#define STATUS_FILE_CONTEXT_NOT_SUPPORTED       BUILD_NTSTATUS(STATUS_SEVERITY_ERROR, 0x001, 0x0001)
+#define STATUS_STREAM_CONTEXT_NOT_SUPPORTED     BUILD_NTSTATUS(STATUS_SEVERITY_ERROR, 0x001, 0x0002)
+
+/* Filter functions shortcuts */
+#define DsQueryStandardInformationFile(fltObjects, fileStandardInfo) \
+    FltQueryInformationFile(                                         \
+        fltObjects->Instance,                                        \
+        fltObjects->FileObject,                                      \
+        fileStandardInfo,                                            \
+        sizeof(FILE_STANDARD_INFORMATION),                           \
+        FileStandardInformation,                                     \
+        NULL                                                         \
+    )
+
+#define FltReleaseContextSafe(ctx)  \
+    if (ctx != NULL) {              \
+        FltReleaseContext(ctx);     \
+    }

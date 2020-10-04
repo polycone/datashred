@@ -47,9 +47,7 @@ NTSTATUS DsInitStreamContext(
 }
 
 VOID DsFreeStreamContext(PDS_STREAM_CONTEXT Context) {
-    FltReleaseContext(Context->InstanceContext);
-    if (Context->FileContext != NULL) {
-        FltReleaseContext(Context->FileContext);
-    }
+    FltReleaseContextSafe(Context->InstanceContext);
+    FltReleaseContextSafe(Context->FileContext);
     DsFreeUnicodeString(&Context->FileName);
 }
