@@ -52,7 +52,7 @@ VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context) {
     DsFreeUnicodeString(&Context->FileName);
 }
 
-VOID DsMarkStreamAsDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context) {
+VOID DsStreamSetDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context) {
     Context->DeleteOnClose = TRUE;
     if (Context->DefaultStream && Context->FileContext != NULL) {
         Context->FileContext->DeleteOnClose = TRUE;

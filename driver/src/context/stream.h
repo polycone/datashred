@@ -39,4 +39,4 @@ NTSTATUS DsInitStreamContext(
     _Inout_ PDS_STREAM_CONTEXT StreamContext
 );
 VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context);
-VOID DsMarkStreamAsDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context);
+VOID DsStreamSetDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context);

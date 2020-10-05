@@ -120,6 +120,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
 
     PDS_FILE_CONTEXT FileContext = context.FileContext;
     PDS_STREAM_CONTEXT StreamContext = context.StreamContext;
+
     InterlockedIncrement(&StreamContext->HandleCount);
     DsLogTrace("Create. Stream: %wZ. Count: %d.", &StreamContext->FileName, StreamContext->HandleCount);
 
@@ -129,7 +130,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     }
 
     if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DELETE_ON_CLOSE))
-        DsMarkStreamAsDeleteOnClose(StreamContext);
+        DsStreamSetDeleteOnClose(StreamContext);
 
     DSR_CLEANUP_START();
     // TODO: Check for STATUS_STREAM_CONTEXT_NOT_SUPPORTED

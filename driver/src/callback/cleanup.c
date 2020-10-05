@@ -32,31 +32,39 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
     DSR_INIT(PASSIVE_LEVEL);
     *CompletionContext = NULL;
 
-    PDS_STREAM_CONTEXT streamContext = NULL;
-    DSR_STATUS = FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &streamContext);
-    if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED) {
-        DSR_STATUS = STATUS_SUCCESS;
-        DSR_CLEANUP();
-    }
-    DSR_CLEANUP_ON_FAIL();
+    PDS_STREAM_CONTEXT StreamContext = NULL;
+    DSR_ASSERT(
+        FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext),
+        DSR_SUPPRESS(STATUS_NOT_FOUND)
+        DSR_SUPPRESS(STATUS_NOT_SUPPORTED)
+    );
+    PDS_FILE_CONTEXT FileContext = StreamContext->FileContext;
 
-    InterlockedDecrement(&streamContext->HandleCount);
-    if (streamContext->FileContext != NULL) {
-        InterlockedDecrement(&streamContext->FileContext->HandleCount);
+    InterlockedDecrement(&StreamContext->HandleCount);
+    DsLogTrace("Cleanup. Stream: %wZ. Count: %d.", &StreamContext->FileName, StreamContext->HandleCount);
+    if (FileContext != NULL) {
+        InterlockedDecrement(&StreamContext->FileContext->HandleCount);
+        DsLogTrace("Cleanup. File: %wZ. Count: %d.", &FileContext->FileName, FileContext->HandleCount);
     }
 
-    if (streamContext->FileContext != NULL) {
-        DsLogTrace("Cleanup. File: %wZ. Handles: %d.", &streamContext->FileContext->FileName, streamContext->FileContext->HandleCount);
+    BOOLEAN eraseStream = StreamContext->HandleCount == 0 && StreamContext->DeleteOnClose;
+    if (FileContext != NULL) {
+        BOOLEAN eraseFile = FileContext->HandleCount == 0 && FileContext->DeleteOnClose;
+        if (FileContext->DeleteOnClose && StreamContext->DefaultStream)
+            eraseStream = FALSE;
+        if (eraseFile) {
+            DsLogTrace("Erase. File: %wZ.", &FileContext->FileName);
+            // TODO: Erase the entire file and streams
+            eraseStream = FALSE;
+        }
     }
-    DsLogTrace("Cleanup. Stream: %wZ. Handles: %d.", &streamContext->FileName, streamContext->HandleCount);
 
-    if (streamContext->HandleCount == 0) {
-        // TODO: Process a file when evaluated handle count reaches zero.
+    if (eraseStream) {
+        DsLogTrace("Erase. Stream: %wZ.", &StreamContext->FileName);
+        // TODO: Erase a file stream
     }
 
     DSR_CLEANUP_EMPTY();
-    if (streamContext != NULL) {
-        FltReleaseContext(streamContext);
-    }
+    FltReleaseContextSafe(StreamContext);
     return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }
