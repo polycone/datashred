@@ -41,6 +41,9 @@
     <ClCompile Include="src\context\file.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\flow.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h">
@@ -74,6 +77,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\context\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\context\data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\flow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

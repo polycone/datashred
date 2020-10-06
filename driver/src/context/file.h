@@ -18,14 +18,11 @@
 
 #pragma once
 #include "common.h"
+#include "data.h"
 #include "util/string.h"
 
 typedef struct _DS_FILE_CONTEXT {
-    UNICODE_STRING FileName;
-    volatile LONG HandleCount;
-    struct {
-        BOOLEAN DeleteOnClose : 1;
-    };
+    DS_CONTEXT_DATA Data;
 } DS_FILE_CONTEXT, *PDS_FILE_CONTEXT;
 
 NTSTATUS DsInitFileContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_FILE_CONTEXT Context);

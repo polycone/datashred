@@ -18,24 +18,10 @@
 
 #pragma once
 #include "common.h"
-#include "file.h"
-#include "data.h"
-#include "instance.h"
+#include "context/stream.h"
 
-typedef struct _DS_STREAM_CONTEXT {
-    PDS_INSTANCE_CONTEXT InstanceContext;
-    PDS_FILE_CONTEXT FileContext;
-    DS_CONTEXT_DATA Data;
-    PEX_PUSH_LOCK ActiveLock;
-    struct {
-        BOOLEAN Default : 1;
-    };
-} DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
-
-NTSTATUS DsInitStreamContext(
-    _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
-    _In_ PDS_INSTANCE_CONTEXT instanceContext,
-    _In_opt_ PDS_FILE_CONTEXT fileContext,
-    _Inout_ PDS_STREAM_CONTEXT StreamContext
-);
-VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context);
+VOID DsFlowSetDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context);
+VOID DsFlowIncrementHandles(_In_ PDS_STREAM_CONTEXT Context);
+VOID DsFlowDecrementHandles(_In_ PDS_STREAM_CONTEXT Context);
+VOID DsFlowLock(_In_ PDS_STREAM_CONTEXT Context);
+VOID DsFlowRelease(_In_ PDS_STREAM_CONTEXT Context);

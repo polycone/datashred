@@ -124,3 +124,6 @@
     if (ctx != NULL) {              \
         FltReleaseContext(ctx);     \
     }
+
+/* Util */
+#define FlagsOn(_F, _SF)        (((_F) & (_SF)) == (_SF))

@@ -32,16 +32,31 @@ NTSTATUS DsInitStreamContext(
     _Inout_ PDS_STREAM_CONTEXT StreamContext
 ) {
     DSR_INIT(APC_LEVEL);
-    DSR_ASSERT(DsCreateUnicodeString(&StreamContext->FileName, FileNameInfo->Name.Length));
-    RtlCopyUnicodeString(&StreamContext->FileName, &FileNameInfo->Name);
-    StreamContext->HandleCount = 0;
-    StreamContext->DefaultStream = DsIsDefaultStream(FileNameInfo);
+    PDS_CONTEXT_DATA Data = &StreamContext->Data;
+    DSR_ASSERT(DsCreateUnicodeString(&Data->FileName, FileNameInfo->Name.Length));
+    RtlCopyUnicodeString(&Data->FileName, &FileNameInfo->Name);
+    Data->HandleCount = 0;
+    Data->Flags = 0;
     StreamContext->InstanceContext = InstanceContext;
     StreamContext->FileContext = FileContext;
-    FltReferenceContext(InstanceContext);
-    if (FileContext != NULL) {
-        FltReferenceContext(FileContext);
+
+    if (DsIsDefaultStream(FileNameInfo)) {
+        SetFlag(Data->Flags, DSCF_DEFAULT);
     }
+
+    FltReferenceContext(InstanceContext);
+
+    if (FileContext != NULL) {
+        SetFlag(Data->Flags, DSCF_USE_FILE_CONTEXT);
+        StreamContext->ActiveLock = &FileContext->Data.Lock;
+        FltReferenceContext(FileContext);
+    } else {
+        ASSERT(IS_ALIGNED(&Data->Lock, sizeof(void *)));
+        FltInitializePushLock(&Data->Lock);
+        SetFlag(Data->Flags, DSCF_PUSH_LOCK_ACTIVE);
+        StreamContext->ActiveLock = &Data->Lock;
+    }
+
     DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }
@@ -49,12 +64,8 @@ NTSTATUS DsInitStreamContext(
 VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context) {
     FltReleaseContextSafe(Context->InstanceContext);
     FltReleaseContextSafe(Context->FileContext);
-    DsFreeUnicodeString(&Context->FileName);
-}
-
-VOID DsStreamSetDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context) {
-    Context->DeleteOnClose = TRUE;
-    if (Context->DefaultStream && Context->FileContext != NULL) {
-        Context->FileContext->DeleteOnClose = TRUE;
+    if (FlagOn(Context->Data.Flags, DSCF_PUSH_LOCK_ACTIVE)) {
+        FltDeletePushLock(&Context->Data.Lock);
     }
+    DsFreeUnicodeString(&Context->Data.FileName);
 }

@@ -18,6 +18,7 @@
 
 #include "cleanup.h"
 #include "context/stream.h"
+#include "flow.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsPreCleanupCallback)
@@ -33,36 +34,17 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
     *CompletionContext = NULL;
 
     PDS_STREAM_CONTEXT StreamContext = NULL;
-    DSR_ASSERT(
-        FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext),
-        DSR_SUPPRESS(STATUS_NOT_FOUND)
-        DSR_SUPPRESS(STATUS_NOT_SUPPORTED)
-    );
+    DSR_ASSERT(FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext));
+
     PDS_FILE_CONTEXT FileContext = StreamContext->FileContext;
 
-    InterlockedDecrement(&StreamContext->HandleCount);
-    DsLogTrace("Cleanup. Stream: %wZ. Count: %d.", &StreamContext->FileName, StreamContext->HandleCount);
+    DsFlowLock(StreamContext);
+    DsFlowDecrementHandles(StreamContext);
+    DsLogTrace("Cleanup. Stream: %wZ. Count: %d.", &StreamContext->Data.FileName, StreamContext->Data.HandleCount);
     if (FileContext != NULL) {
-        InterlockedDecrement(&StreamContext->FileContext->HandleCount);
-        DsLogTrace("Cleanup. File: %wZ. Count: %d.", &FileContext->FileName, FileContext->HandleCount);
+        DsLogTrace("Cleanup. File: %wZ. Count: %d.", &FileContext->Data.FileName, FileContext->Data.HandleCount);
     }
-
-    BOOLEAN eraseStream = StreamContext->HandleCount == 0 && StreamContext->DeleteOnClose;
-    if (FileContext != NULL) {
-        BOOLEAN eraseFile = FileContext->HandleCount == 0 && FileContext->DeleteOnClose;
-        if (FileContext->DeleteOnClose && StreamContext->DefaultStream)
-            eraseStream = FALSE;
-        if (eraseFile) {
-            DsLogTrace("Erase. File: %wZ.", &FileContext->FileName);
-            // TODO: Erase the entire file and streams
-            eraseStream = FALSE;
-        }
-    }
-
-    if (eraseStream) {
-        DsLogTrace("Erase. Stream: %wZ.", &StreamContext->FileName);
-        // TODO: Erase a file stream
-    }
+    DsFlowRelease(StreamContext);
 
     DSR_CLEANUP_EMPTY();
     FltReleaseContextSafe(StreamContext);

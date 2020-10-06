@@ -161,13 +161,13 @@ static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _
 static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
     UNREFERENCED_PARAMETER(ContextType);
     PDS_STREAM_CONTEXT context = (PDS_STREAM_CONTEXT)Context;
-    DsLogTrace("Stream context is being cleaned up. File name: %wZ.", &context->FileName);
+    DsLogTrace("Stream context is being cleaned up. File name: %wZ.", &context->Data.FileName);
     DsFreeStreamContext(context);
 }
 
 static VOID FLTAPI DsFileContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
     UNREFERENCED_PARAMETER(ContextType);
     PDS_FILE_CONTEXT context = (PDS_FILE_CONTEXT)Context;
-    DsLogTrace("File context is being cleaned up. File name: %wZ.", &context->FileName);
+    DsLogTrace("File context is being cleaned up. File name: %wZ.", &context->Data.FileName);
     DsFreeFileContext(context);
 }

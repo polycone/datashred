@@ -19,6 +19,7 @@
 #include "create.h"
 #include "context/stream.h"
 #include "util/filename.h"
+#include "flow.h"
 
 typedef struct _DS_INITIALIZATION_CONTEXT {
     PCFLT_RELATED_OBJECTS FltObjects;
@@ -121,16 +122,15 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     PDS_FILE_CONTEXT FileContext = context.FileContext;
     PDS_STREAM_CONTEXT StreamContext = context.StreamContext;
 
-    InterlockedIncrement(&StreamContext->HandleCount);
-    DsLogTrace("Create. Stream: %wZ. Count: %d.", &StreamContext->FileName, StreamContext->HandleCount);
-
+    DsFlowLock(StreamContext);
+    DsFlowIncrementHandles(StreamContext);
+    DsLogTrace("Create. Stream: %wZ. Count: %d.", &StreamContext->Data.FileName, StreamContext->Data.HandleCount);
     if (FileContext != NULL) {
-        InterlockedIncrement(&FileContext->HandleCount);
-        DsLogTrace("Create. File: %wZ. Count: %d.", &FileContext->FileName, FileContext->HandleCount);
+        DsLogTrace("Create. File: %wZ. Count: %d.", &FileContext->Data.FileName, FileContext->Data.HandleCount);
     }
-
     if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DELETE_ON_CLOSE))
-        DsStreamSetDeleteOnClose(StreamContext);
+        DsFlowSetDeleteOnClose(StreamContext);
+    DsFlowRelease(StreamContext);
 
     DSR_CLEANUP_START();
     // TODO: Check for STATUS_STREAM_CONTEXT_NOT_SUPPORTED

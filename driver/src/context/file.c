@@ -26,13 +26,17 @@
 NTSTATUS DsInitFileContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_FILE_CONTEXT Context) {
     DSR_INIT(APC_LEVEL);
     USHORT fileNameLength = FileNameInfo->Name.Length - FileNameInfo->Stream.Length;
-    DSR_ASSERT(DsCreateUnicodeString(&Context->FileName, fileNameLength));
-    RtlCopyUnicodeString(&Context->FileName, &FileNameInfo->Name);
-    Context->HandleCount = 0;
+    DSR_ASSERT(DsCreateUnicodeString(&Context->Data.FileName, fileNameLength));
+    RtlCopyUnicodeString(&Context->Data.FileName, &FileNameInfo->Name);
+    Context->Data.HandleCount = 0;
+    Context->Data.Flags = 0;
+    ASSERT(IS_ALIGNED(&Context->Data.Lock, sizeof(void *)));
+    FltInitializePushLock(&Context->Data.Lock);
     DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }
 
 VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT Context) {
-    DsFreeUnicodeString(&Context->FileName);
+    DsFreeUnicodeString(&Context->Data.FileName);
+    FltDeletePushLock(&Context->Data.Lock);
 }
