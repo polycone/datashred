@@ -34,7 +34,12 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
     *CompletionContext = NULL;
 
     PDS_STREAM_CONTEXT StreamContext = NULL;
-    DSR_ASSERT(FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext));
+    DSR_STATUS = FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext);
+    if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED) {
+        DSR_STATUS = STATUS_SUCCESS;
+        DSR_CLEANUP();
+    }
+    DSR_CLEANUP_ON_FAIL();
 
     PDS_FILE_CONTEXT FileContext = StreamContext->FileContext;
 
