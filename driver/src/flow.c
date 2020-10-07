@@ -18,6 +18,14 @@
 
 #include "flow.h"
 
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text(PAGE, DsFlowSetDeleteOnClose)
+#pragma alloc_text(PAGE, DsFlowIncrementHandles)
+#pragma alloc_text(PAGE, DsFlowDecrementHandles)
+#pragma alloc_text(PAGE, DsFlowLock)
+#pragma alloc_text(PAGE, DsFlowRelease)
+#endif
+
 VOID DsFlowSetDeleteOnClose(_In_ PDS_STREAM_CONTEXT Context) {
     SetFlag(Context->Data.Flags, DSCF_DELETE_ON_CLOSE);
     if (FlagsOn(Context->Data.Flags, DSCF_DEFAULT | DSCF_USE_FILE_CONTEXT)) {
