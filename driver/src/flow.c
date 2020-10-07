@@ -33,9 +33,9 @@ VOID DsFlowIncrementHandles(_In_ PDS_STREAM_CONTEXT Context) {
 }
 
 VOID DsFlowDecrementHandles(_In_ PDS_STREAM_CONTEXT Context) {
-    ++Context->Data.HandleCount;
+    --Context->Data.HandleCount;
     if (FlagsOn(Context->Data.Flags, DSCF_USE_FILE_CONTEXT)) {
-        ++Context->FileContext->Data.HandleCount;
+        --Context->FileContext->Data.HandleCount;
     }
 }
 
