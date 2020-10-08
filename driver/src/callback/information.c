@@ -40,5 +40,5 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreSetInformationCallback(
     DSR_CLEANUP_EMPTY();
 
     FltReleaseContextSafe(StreamContext);
-    return DSR_STATUS;
+    return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }
