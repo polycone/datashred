@@ -44,6 +44,9 @@
     <ClCompile Include="src\flow.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\callback\information.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h">
@@ -83,6 +86,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\flow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\callback\information.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

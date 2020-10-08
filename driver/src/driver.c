@@ -61,6 +61,7 @@ static const FLT_CONTEXT_REGISTRATION contexts[] = {
 
 static const FLT_OPERATION_REGISTRATION callbacks[] = {
     { IRP_MJ_CREATE, EMPTY_FLAGS, DsPreCreateCallback, DsPostCreateCallback, NULL },
+    { IRP_MJ_SET_INFORMATION, FLTFL_OPERATION_REGISTRATION_SKIP_PAGING_IO, DsPreSetInformationCallback, EMPTY_CALLBACK, NULL },
     { IRP_MJ_CLEANUP, EMPTY_FLAGS, DsPreCleanupCallback, EMPTY_CALLBACK, NULL },
     { IRP_MJ_OPERATION_END }
 };

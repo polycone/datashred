@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClCompile Include="src\callback\cleanup.c" />
     <ClCompile Include="src\callback\create.c" />
+    <ClCompile Include="src\callback\information.c" />
     <ClCompile Include="src\context\file.c" />
     <ClCompile Include="src\context\instance.c" />
     <ClCompile Include="src\context\stream.c" />
@@ -151,6 +152,7 @@
     <ClInclude Include="src\callback.h" />
     <ClInclude Include="src\callback\cleanup.h" />
     <ClInclude Include="src\callback\create.h" />
+    <ClInclude Include="src\callback\information.h" />
     <ClInclude Include="src\common.h" />
     <ClInclude Include="src\context\data.h" />
     <ClInclude Include="src\context\file.h" />

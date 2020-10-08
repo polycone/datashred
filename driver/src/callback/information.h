@@ -17,6 +17,10 @@
  */
 
 #pragma once
-#include "callback/create.h"
-#include "callback/information.h"
-#include "callback/cleanup.h"
+#include "common.h"
+
+FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreSetInformationCallback(
+    _Inout_ PFLT_CALLBACK_DATA Data,
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _Out_ PVOID *CompletionContext
+);
