@@ -26,10 +26,6 @@ typedef struct _DS_STREAM_CONTEXT {
     PDS_INSTANCE_CONTEXT InstanceContext;
     PDS_FILE_CONTEXT FileContext;
     DS_CONTEXT_DATA Data;
-    PEX_PUSH_LOCK ActiveLock;
-    struct {
-        BOOLEAN Default : 1;
-    };
 } DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
 
 NTSTATUS DsInitStreamContext(

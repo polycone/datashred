@@ -129,7 +129,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
         DsLogTrace("Create. File: %wZ. Count: %d.", &FileContext->Data.FileName, FileContext->Data.HandleCount);
     }
     if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DELETE_ON_CLOSE))
-        DsFlowSetDeleteOnClose(StreamContext);
+        DsFlowSetFlags(StreamContext, DSCF_DELETE_ON_CLOSE);
     DsFlowRelease(StreamContext);
 
     DSR_CLEANUP_START();

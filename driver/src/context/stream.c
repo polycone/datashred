@@ -48,13 +48,11 @@ NTSTATUS DsInitStreamContext(
 
     if (FileContext != NULL) {
         SetFlag(Data->Flags, DSCF_USE_FILE_CONTEXT);
-        StreamContext->ActiveLock = &FileContext->Data.Lock;
         FltReferenceContext(FileContext);
     } else {
         ASSERT(IS_ALIGNED(&Data->Lock, sizeof(void *)));
         FltInitializePushLock(&Data->Lock);
         SetFlag(Data->Flags, DSCF_PUSH_LOCK_ACTIVE);
-        StreamContext->ActiveLock = &Data->Lock;
     }
 
     DSR_CLEANUP_EMPTY();
