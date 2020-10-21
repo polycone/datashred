@@ -19,5 +19,5 @@
 #pragma once
 #include "common.h"
 
-BOOLEAN DsIsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo);
-BOOLEAN DsIsDefaultStream(PFLT_FILE_NAME_INFORMATION FileNameInfo);
+BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName);
+BOOLEAN DsIsDefaultStream(_In_ PUNICODE_STRING StreamName);

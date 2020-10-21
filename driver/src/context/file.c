@@ -18,25 +18,33 @@
 
 #include "file.h"
 
+static VOID DsExtractFileName(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Out_ PUNICODE_STRING FileName);
+
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitFileContext)
 #pragma alloc_text(PAGE, DsFreeFileContext)
+#pragma alloc_text(PAGE, DsExtractFileName)
 #endif
 
-NTSTATUS DsInitFileContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_FILE_CONTEXT Context) {
+NTSTATUS DsInitFileContext(
+    _Inout_ PDS_FILE_CONTEXT FileContext,
+    _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
+    _In_ PDS_INSTANCE_CONTEXT InstanceContext
+) {
     DSR_INIT(APC_LEVEL);
-    USHORT fileNameLength = FileNameInfo->Name.Length - FileNameInfo->Stream.Length;
-    DSR_ASSERT(DsCreateUnicodeString(&Context->Data.FileName, fileNameLength));
-    RtlCopyUnicodeString(&Context->Data.FileName, &FileNameInfo->Name);
-    Context->Data.HandleCount = 0;
-    Context->Data.Flags = 0;
-    ASSERT(IS_ALIGNED(&Context->Data.Lock, sizeof(void *)));
-    FltInitializePushLock(&Context->Data.Lock);
+    UNICODE_STRING fileName;
+    DsExtractFileName(FileNameInfo, &fileName);
+    DSR_ASSERT(DsInitMonitorContext(&FileContext->MonitorContext, &fileName, InstanceContext));
     DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }
 
-VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT Context) {
-    DsFreeUnicodeString(&Context->Data.FileName);
-    FltDeletePushLock(&Context->Data.Lock);
+VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT FileContext) {
+    DsFreeMonitorContext(&FileContext->MonitorContext);
+}
+
+static VOID DsExtractFileName(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Out_ PUNICODE_STRING FileName) {
+    FileName->Buffer = FileNameInfo->Name.Buffer;
+    FileName->Length = FileNameInfo->Name.Length - FileNameInfo->Stream.Length;
+    FileName->MaximumLength = FileName->Length;
 }

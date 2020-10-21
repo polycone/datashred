@@ -27,46 +27,46 @@
 #pragma alloc_text(PAGE, DsFlowRelease)
 #endif
 
-VOID DsFlowSetFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_CONTEXT_FLAGS Flags) {
-    SetFlag(Context->Data.Flags, Flags);
-    if (FlagsOn(Context->Data.Flags, DSCF_DEFAULT | DSCF_USE_FILE_CONTEXT)) {
-        SetFlag(Context->FileContext->Data.Flags, Flags);
+VOID DsFlowSetFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_MONITOR_FLAGS Flags) {
+    SetFlag(Context->MonitorContext.Flags, Flags);
+    if (Context->FileContext != NULL && FlagsOn(Context->MonitorContext.Flags, DS_MONITOR_FILE_DEFAULT_STREAM)) {
+        SetFlag(Context->FileContext->MonitorContext.Flags, Flags);
     }
 }
 
-VOID DsFlowClearFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_CONTEXT_FLAGS Flags) {
-    ClearFlag(Context->Data.Flags, Flags);
-    if (FlagsOn(Context->Data.Flags, DSCF_DEFAULT | DSCF_USE_FILE_CONTEXT)) {
-        ClearFlag(Context->FileContext->Data.Flags, Flags);
+VOID DsFlowClearFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_MONITOR_FLAGS Flags) {
+    ClearFlag(Context->MonitorContext.Flags, Flags);
+    if (Context->FileContext != NULL && FlagsOn(Context->MonitorContext.Flags, DS_MONITOR_FILE_DEFAULT_STREAM)) {
+        ClearFlag(Context->FileContext->MonitorContext.Flags, Flags);
     }
 }
 
 VOID DsFlowIncrementHandles(_In_ PDS_STREAM_CONTEXT Context) {
-    ++Context->Data.HandleCount;
-    if (FlagsOn(Context->Data.Flags, DSCF_USE_FILE_CONTEXT)) {
-        ++Context->FileContext->Data.HandleCount;
+    ++Context->MonitorContext.HandleCount;
+    if (Context->FileContext != NULL) {
+        ++Context->FileContext->MonitorContext.HandleCount;
     }
 }
 
 VOID DsFlowDecrementHandles(_In_ PDS_STREAM_CONTEXT Context) {
-    --Context->Data.HandleCount;
-    if (FlagsOn(Context->Data.Flags, DSCF_USE_FILE_CONTEXT)) {
-        --Context->FileContext->Data.HandleCount;
+    --Context->MonitorContext.HandleCount;
+    if (Context->FileContext != NULL) {
+        --Context->FileContext->MonitorContext.HandleCount;
     }
 }
 
 VOID DsFlowLock(_In_ PDS_STREAM_CONTEXT Context) {
-    PEX_PUSH_LOCK PushLock = &Context->Data.Lock;
-    if (FlagOn(Context->Data.Flags, DSCF_USE_FILE_CONTEXT)) {
-        PushLock = &Context->FileContext->Data.Lock;
+    PEX_PUSH_LOCK PushLock = &Context->MonitorContext.Lock;
+    if (Context->FileContext != NULL) {
+        PushLock = &Context->FileContext->MonitorContext.Lock;
     }
     FltAcquirePushLockExclusive(PushLock);
 }
 
 VOID DsFlowRelease(_In_ PDS_STREAM_CONTEXT Context) {
-    PEX_PUSH_LOCK PushLock = &Context->Data.Lock;
-    if (FlagOn(Context->Data.Flags, DSCF_USE_FILE_CONTEXT)) {
-        PushLock = &Context->FileContext->Data.Lock;
+    PEX_PUSH_LOCK PushLock = &Context->MonitorContext.Lock;
+    if (Context->FileContext != NULL) {
+        PushLock = &Context->FileContext->MonitorContext.Lock;
     }
     FltReleasePushLock(PushLock);
 }

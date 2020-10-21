@@ -19,19 +19,18 @@
 #pragma once
 #include "common.h"
 #include "file.h"
-#include "data.h"
+#include "monitor.h"
 #include "instance.h"
 
 typedef struct _DS_STREAM_CONTEXT {
-    PDS_INSTANCE_CONTEXT InstanceContext;
     PDS_FILE_CONTEXT FileContext;
-    DS_CONTEXT_DATA Data;
+    DS_MONITOR_CONTEXT MonitorContext;
 } DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
 
 NTSTATUS DsInitStreamContext(
     _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
-    _In_ PDS_INSTANCE_CONTEXT instanceContext,
-    _In_opt_ PDS_FILE_CONTEXT fileContext,
+    _In_ PDS_INSTANCE_CONTEXT InstanceContext,
+    _In_opt_ PDS_FILE_CONTEXT FileContext,
     _Inout_ PDS_STREAM_CONTEXT StreamContext
 );
 VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context);

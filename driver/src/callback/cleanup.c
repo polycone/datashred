@@ -45,9 +45,9 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
 
     DsFlowLock(StreamContext);
     DsFlowDecrementHandles(StreamContext);
-    DsLogTrace("Cleanup. Stream: %wZ. Count: %d.", &StreamContext->Data.FileName, StreamContext->Data.HandleCount);
+    DsLogTrace("Cleanup. Stream: %wZ. Count: %d.", &StreamContext->MonitorContext.Name, StreamContext->MonitorContext.HandleCount);
     if (FileContext != NULL) {
-        DsLogTrace("Cleanup. File: %wZ. Count: %d.", &FileContext->Data.FileName, FileContext->Data.HandleCount);
+        DsLogTrace("Cleanup. File: %wZ. Count: %d.", &FileContext->MonitorContext.Name, FileContext->MonitorContext.HandleCount);
     }
     DsFlowRelease(StreamContext);
 

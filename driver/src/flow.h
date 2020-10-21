@@ -20,8 +20,8 @@
 #include "common.h"
 #include "context/stream.h"
 
-VOID DsFlowSetFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_CONTEXT_FLAGS Flags);
-VOID DsFlowClearFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_CONTEXT_FLAGS Flags);
+VOID DsFlowSetFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_MONITOR_FLAGS Flags);
+VOID DsFlowClearFlags(_In_ PDS_STREAM_CONTEXT Context, _In_ DS_MONITOR_FLAGS Flags);
 VOID DsFlowIncrementHandles(_In_ PDS_STREAM_CONTEXT Context);
 VOID DsFlowDecrementHandles(_In_ PDS_STREAM_CONTEXT Context);
 VOID DsFlowLock(_In_ PDS_STREAM_CONTEXT Context);

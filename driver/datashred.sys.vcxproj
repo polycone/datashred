@@ -140,6 +140,7 @@
     <ClCompile Include="src\callback\information.c" />
     <ClCompile Include="src\context\file.c" />
     <ClCompile Include="src\context\instance.c" />
+    <ClCompile Include="src\context\monitor.c" />
     <ClCompile Include="src\context\stream.c" />
     <ClCompile Include="src\driver.c" />
     <ClCompile Include="src\flow.c" />
@@ -154,7 +155,7 @@
     <ClInclude Include="src\callback\create.h" />
     <ClInclude Include="src\callback\information.h" />
     <ClInclude Include="src\common.h" />
-    <ClInclude Include="src\context\data.h" />
+    <ClInclude Include="src\context\monitor.h" />
     <ClInclude Include="src\context\file.h" />
     <ClInclude Include="src\context\instance.h" />
     <ClInclude Include="src\context\stream.h" />

@@ -25,14 +25,13 @@ static DECLARE_CONST_UNICODE_STRING(DataStreamTypeName, L"$DATA");
 #pragma alloc_text(PAGE, DsIsDefaultStream)
 #endif
 
-BOOLEAN DsIsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo) {
-    PUNICODE_STRING streamName = &FileNameInfo->Stream;
-    if (streamName->Length == 0) {
+BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName) {
+    if (StreamName->Length == 0) {
         return TRUE;
     }
     int typeNameIndex = -1;
-    for (int i = (streamName->Length / sizeof(WCHAR)) - 1; i >= 0; --i) {
-        if (streamName->Buffer[i] == L':') {
+    for (int i = (StreamName->Length / sizeof(WCHAR)) - 1; i >= 0; --i) {
+        if (StreamName->Buffer[i] == L':') {
             typeNameIndex = i + 1;
             break;
         }
@@ -40,18 +39,18 @@ BOOLEAN DsIsDataStream(PFLT_FILE_NAME_INFORMATION FileNameInfo) {
     if (typeNameIndex == 1) {
         return TRUE;
     }
-    USHORT typeNameLength = streamName->Length - (USHORT)typeNameIndex * sizeof(WCHAR);
-    UNICODE_STRING typeName = { typeNameLength, typeNameLength, &streamName->Buffer[typeNameIndex] };
+    USHORT typeNameLength = StreamName->Length - (USHORT)typeNameIndex * sizeof(WCHAR);
+    UNICODE_STRING typeName = { typeNameLength, typeNameLength, &StreamName->Buffer[typeNameIndex] };
     return RtlCompareUnicodeString(&typeName, &DataStreamTypeName, TRUE) == 0;
 }
 
-BOOLEAN DsIsDefaultStream(PFLT_FILE_NAME_INFORMATION FileNameInfo) {
-    if (FileNameInfo->Stream.Length == 0) {
+BOOLEAN DsIsDefaultStream(_In_ PUNICODE_STRING StreamName) {
+    if (StreamName->Length == 0) {
         return TRUE;
     }
-    if (FileNameInfo->Stream.Length >= 2 &&
-        FileNameInfo->Stream.Buffer[0] == L':' &&
-        FileNameInfo->Stream.Buffer[1] == L':'
+    if (StreamName->Length >= 2 &&
+        StreamName->Buffer[0] == L':' &&
+        StreamName->Buffer[1] == L':'
     ) {
         return TRUE;
     }

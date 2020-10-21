@@ -32,38 +32,20 @@ NTSTATUS DsInitStreamContext(
     _Inout_ PDS_STREAM_CONTEXT StreamContext
 ) {
     DSR_INIT(APC_LEVEL);
-    PDS_CONTEXT_DATA Data = &StreamContext->Data;
-    DSR_ASSERT(DsCreateUnicodeString(&Data->FileName, FileNameInfo->Name.Length));
-    RtlCopyUnicodeString(&Data->FileName, &FileNameInfo->Name);
-    Data->HandleCount = 0;
-    Data->Flags = 0;
-    StreamContext->InstanceContext = InstanceContext;
-    StreamContext->FileContext = FileContext;
-
-    if (DsIsDefaultStream(FileNameInfo)) {
-        SetFlag(Data->Flags, DSCF_DEFAULT);
+    PDS_MONITOR_CONTEXT MonitorContext = &StreamContext->MonitorContext;
+    DSR_ASSERT(DsInitMonitorContext(MonitorContext, &FileNameInfo->Stream, InstanceContext));
+    if (DsIsDefaultStream(&FileNameInfo->Stream)) {
+        SetFlag(MonitorContext->Flags, DS_MONITOR_FILE_DEFAULT_STREAM);
     }
-
-    FltReferenceContext(InstanceContext);
-
     if (FileContext != NULL) {
-        SetFlag(Data->Flags, DSCF_USE_FILE_CONTEXT);
+        StreamContext->FileContext = FileContext;
         FltReferenceContext(FileContext);
-    } else {
-        ASSERT(IS_ALIGNED(&Data->Lock, sizeof(void *)));
-        FltInitializePushLock(&Data->Lock);
-        SetFlag(Data->Flags, DSCF_PUSH_LOCK_ACTIVE);
     }
-
     DSR_CLEANUP_EMPTY();
     return DSR_STATUS;
 }
 
 VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context) {
-    FltReleaseContextSafe(Context->InstanceContext);
+    DsFreeMonitorContext(&Context->MonitorContext);
     FltReleaseContextSafe(Context->FileContext);
-    if (FlagOn(Context->Data.Flags, DSCF_PUSH_LOCK_ACTIVE)) {
-        FltDeletePushLock(&Context->Data.Lock);
-    }
-    DsFreeUnicodeString(&Context->Data.FileName);
 }

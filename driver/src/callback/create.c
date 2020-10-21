@@ -112,7 +112,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
         DSR_CLEANUP();
 
     DSR_ASSERT(FltParseFileNameInformation(context.FileNameInfo));
-    if (!DsIsDataStream(context.FileNameInfo))
+    if (!DsIsDataStream(&context.FileNameInfo->Stream))
         DSR_CLEANUP();
 
     DSR_ASSERT(FltGetInstanceContext(FltObjects->Instance, &context.InstanceContext));
@@ -124,12 +124,12 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
 
     DsFlowLock(StreamContext);
     DsFlowIncrementHandles(StreamContext);
-    DsLogTrace("Create. Stream: %wZ. Count: %d.", &StreamContext->Data.FileName, StreamContext->Data.HandleCount);
+    DsLogTrace("Create. Stream: %wZ. Count: %d.", &StreamContext->MonitorContext.Name, StreamContext->MonitorContext.HandleCount);
     if (FileContext != NULL) {
-        DsLogTrace("Create. File: %wZ. Count: %d.", &FileContext->Data.FileName, FileContext->Data.HandleCount);
+        DsLogTrace("Create. File: %wZ. Count: %d.", &FileContext->MonitorContext.Name, FileContext->MonitorContext.HandleCount);
     }
     if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DELETE_ON_CLOSE))
-        DsFlowSetFlags(StreamContext, DSCF_DELETE_ON_CLOSE);
+        DsFlowSetFlags(StreamContext, DS_MONITOR_FILE_DELETE_ON_CLOSE);
     DsFlowRelease(StreamContext);
 
     DSR_CLEANUP_START();
@@ -158,7 +158,7 @@ static NTSTATUS SetupFileContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
     DSR_STATUS = FltGetFileContext(Instance, FileObject, &fileContext);
     if (DSR_STATUS == STATUS_NOT_FOUND) {
         DSR_ASSERT(FltAllocateContext(Filter, FLT_FILE_CONTEXT, sizeof(DS_FILE_CONTEXT), PagedPool, &fileContext));
-        DSR_ASSERT(DsInitFileContext(Context->FileNameInfo, fileContext));
+        DSR_ASSERT(DsInitFileContext(fileContext, Context->FileNameInfo, Context->InstanceContext));
         PDS_FILE_CONTEXT oldContext = NULL;
         DSR_STATUS = FltSetFileContext(Instance, FileObject, FLT_FILE_CONTEXT, fileContext, &oldContext);
         if (DSR_STATUS == STATUS_FLT_CONTEXT_ALREADY_DEFINED) {

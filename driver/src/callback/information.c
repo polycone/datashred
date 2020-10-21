@@ -102,8 +102,8 @@ static VOID ProcessFileDispositionInformationEx(
 ) {
     if (FlagOn(Disposition->Flags, FILE_DISPOSITION_ON_CLOSE)) {
         if (FlagOn(Disposition->Flags, FILE_DISPOSITION_DELETE))
-            DsFlowSetFlags(StreamContext, DSCF_DELETE_ON_CLOSE);
+            DsFlowSetFlags(StreamContext, DS_MONITOR_FILE_DELETE_ON_CLOSE);
         else
-            DsFlowClearFlags(StreamContext, DSCF_DELETE_ON_CLOSE);
+            DsFlowClearFlags(StreamContext, DS_MONITOR_FILE_DELETE_ON_CLOSE);
     }
 }

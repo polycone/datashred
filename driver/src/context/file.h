@@ -18,12 +18,17 @@
 
 #pragma once
 #include "common.h"
-#include "data.h"
+#include "monitor.h"
 #include "util/string.h"
 
 typedef struct _DS_FILE_CONTEXT {
-    DS_CONTEXT_DATA Data;
+    DS_MONITOR_CONTEXT MonitorContext;
 } DS_FILE_CONTEXT, *PDS_FILE_CONTEXT;
 
-NTSTATUS DsInitFileContext(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Inout_ PDS_FILE_CONTEXT Context);
-VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT Context);
+NTSTATUS DsInitFileContext(
+    _Inout_ PDS_FILE_CONTEXT FileContext,
+    _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
+    _In_ PDS_INSTANCE_CONTEXT InstanceContext
+);
+
+VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT FileContext);
