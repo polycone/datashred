@@ -152,7 +152,7 @@ static NTSTATUS SetupFileContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
     PFLT_INSTANCE Instance = Context->FltObjects->Instance;
     PFILE_OBJECT FileObject = Context->FltObjects->FileObject;
     PDS_FILE_CONTEXT fileContext = NULL;
-    if (!FltSupportsFileContexts(FileObject))
+    if (!FltSupportsFileContextsEx(FileObject, Instance))
         return STATUS_FILE_CONTEXT_NOT_SUPPORTED;
 
     DSR_STATUS = FltGetFileContext(Instance, FileObject, &fileContext);
@@ -184,7 +184,7 @@ static NTSTATUS SetupStreamContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
     PFLT_INSTANCE Instance = Context->FltObjects->Instance;
     PFILE_OBJECT FileObject = Context->FltObjects->FileObject;
     PDS_STREAM_CONTEXT streamContext = NULL;
-    if (!FltSupportsFileContexts(FileObject))
+    if (!FltSupportsStreamContexts(FileObject))
         return STATUS_STREAM_CONTEXT_NOT_SUPPORTED;
 
     DSR_STATUS = FltGetStreamContext(Instance, FileObject, &streamContext);
