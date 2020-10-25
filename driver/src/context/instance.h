@@ -23,6 +23,7 @@
 typedef struct _DS_INSTANCE_CONTEXT {
     UNICODE_STRING VolumeGuid;
     DS_VOLUME_PROPERTIES VolumeProperties;
+    DS_FILESYSTEM_PROPERTIES FileSystemProperties;
 } DS_INSTANCE_CONTEXT, *PDS_INSTANCE_CONTEXT;
 
 NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT Context);

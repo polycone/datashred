@@ -134,10 +134,12 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     DsLogInfo(
         "Instance context created.\n"
         "  - Volume: %wZ\n"
-        "  - Filesystem: %d\n"
-        "  - Sector size: %d",
+        "  - File system: %d\n"
+        "  - File system attributes: 0x%08X\n"
+        "  - Sector size: %d\n",
         &context->VolumeGuid,
-        context->VolumeProperties.FilesystemType,
+        context->FileSystemProperties.Type,
+        context->FileSystemProperties.Attributes,
         context->VolumeProperties.SectorSize
     );
 

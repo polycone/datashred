@@ -29,6 +29,7 @@ NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PD
     DsInitUnicodeString(&Context->VolumeGuid);
     DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &Context->VolumeGuid));
     DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &Context->VolumeProperties));
+    DSR_ASSERT(DsGetFileSystemProperties(FltObjects->Instance, &Context->FileSystemProperties));
     DSR_CLEANUP_START();
     DsFreeInstanceContext(Context);
     DSR_CLEANUP_END();
