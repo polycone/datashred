@@ -28,6 +28,6 @@ typedef struct _DS_FILESYSTEM_PROPERTIES {
     ULONG Attributes;
 } DS_FILESYSTEM_PROPERTIES, *PDS_FILESYSTEM_PROPERTIES;
 
-NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
-NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPERTIES VolumeProperties);
-NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Inout_ PDS_FILESYSTEM_PROPERTIES Properties);
+NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Out_ PUNICODE_STRING Name);
+NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Out_ PDS_VOLUME_PROPERTIES VolumeProperties);
+NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Out_ PDS_FILESYSTEM_PROPERTIES Properties);

@@ -26,7 +26,7 @@
 #pragma alloc_text(PAGE, DsGetFileSystemProperties)
 #endif
 
-NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
+NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Out_ PUNICODE_STRING Name) {
     DSR_INIT(PASSIVE_LEVEL);
     ULONG bufferLength = 0;
     DSR_ASSERT(FltGetVolumeGuidName(Volume, NULL, &bufferLength), DSR_SUPPRESS(STATUS_BUFFER_TOO_SMALL));
@@ -38,7 +38,7 @@ NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Na
     return DSR_STATUS;
 }
 
-NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPERTIES Properties) {
+NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Out_ PDS_VOLUME_PROPERTIES Properties) {
     DSR_INIT(APC_LEVEL);
     ULONG bufferLength = 0;
     FLT_VOLUME_PROPERTIES properties;
@@ -53,7 +53,7 @@ NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Inout_ PDS_VOLUME_PROPE
 
 #define FS_ATTR_INFO_SIZE sizeof(FILE_FS_ATTRIBUTE_INFORMATION)
 
-NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Inout_ PDS_FILESYSTEM_PROPERTIES Properties) {
+NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Out_ PDS_FILESYSTEM_PROPERTIES Properties) {
     DSR_INIT(PASSIVE_LEVEL);
     IO_STATUS_BLOCK ioStatus;
     FILE_FS_ATTRIBUTE_INFORMATION fsAttributeInfo;
