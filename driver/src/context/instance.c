@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,8 +16,7 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "instance.h"
-#include "util/string.h"
+#include <context.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitInstanceContext)
@@ -30,9 +29,9 @@ NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PD
     DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &Context->VolumeGuid));
     DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &Context->VolumeProperties));
     DSR_ASSERT(DsGetFileSystemProperties(FltObjects->Instance, &Context->FileSystemProperties));
-    DSR_CLEANUP_START();
-    DsFreeInstanceContext(Context);
-    DSR_CLEANUP_END();
+    DSR_CLEANUP {
+        DsFreeInstanceContext(Context);
+    }
     return DSR_STATUS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,14 +16,8 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "information.h"
-#include "context/stream.h"
-#include "flow.h"
-
-static VOID ProcessFileDispositionInformationEx(
-    _In_ PDS_STREAM_CONTEXT StreamContext,
-    _In_ PFILE_DISPOSITION_INFORMATION_EX Disposition
-);
+#include <callback.h>
+#include <context.h>
 
 FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreSetInformationCallback(
     _Inout_ PFLT_CALLBACK_DATA Data,
@@ -40,28 +34,18 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreSetInformationCallback(
     DSR_STATUS = FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext);
     if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED) {
         DSR_STATUS = STATUS_SUCCESS;
-        DSR_CLEANUP();
+        DSR_GOTO_CLEANUP();
     }
     DSR_CLEANUP_ON_FAIL();
 
-    switch (Data->Iopb->Parameters.SetFileInformation.FileInformationClass) {
-        case FileDispositionInformation:
-        case FileDispositionInformationEx:
-            break;
-        default:
-            callbackStatus = FLT_PREOP_SUCCESS_NO_CALLBACK;
-            DSR_CLEANUP();
-    }
-
     *CompletionContext = StreamContext;
 
-    DSR_CLEANUP_START();
-    Data->IoStatus.Status = DSR_STATUS;
-    callbackStatus = FLT_PREOP_COMPLETE;
-    DSR_CLEANUP_END();
-    if (callbackStatus != FLT_PREOP_SUCCESS_WITH_CALLBACK) {
-        FltReleaseContextSafe(StreamContext);
+    DSR_CLEANUP {
+        Data->IoStatus.Status = DSR_STATUS;
+        callbackStatus = FLT_PREOP_COMPLETE;
     }
+        if (callbackStatus != FLT_PREOP_SUCCESS_WITH_CALLBACK)
+            FltReleaseContextSafe(StreamContext);
     return callbackStatus;
 }
 
@@ -71,39 +55,14 @@ FLT_POSTOP_CALLBACK_STATUS DsPostSetInformationCallback(
     _In_ PVOID CompletionContext,
     _In_ FLT_POST_OPERATION_FLAGS Flags
 ) {
-    UNREFERENCED_PARAMETER(FltObjects);
-    UNREFERENCED_PARAMETER(Flags);
     DSR_INIT(PASSIVE_LEVEL);
     PDS_STREAM_CONTEXT StreamContext = (PDS_STREAM_CONTEXT)CompletionContext;
 
     if (!NT_SUCCESS(Data->IoStatus.Status))
-        DSR_CLEANUP();
+        DSR_GOTO_CLEANUP();
 
-    switch (Data->Iopb->Parameters.SetFileInformation.FileInformationClass)
-    {
-        case FileDispositionInformationEx: {
-            ProcessFileDispositionInformationEx(
-                StreamContext,
-                (PFILE_DISPOSITION_INFORMATION_EX)Data->Iopb->Parameters.SetFileInformation.InfoBuffer
-            );
-            break;
-        }
-    }
-
-    DSR_CLEANUP_EMPTY();
+    DSR_CLEANUP { }
 
     FltReleaseContextSafe(StreamContext);
     return FLT_POSTOP_FINISHED_PROCESSING;
-}
-
-static VOID ProcessFileDispositionInformationEx(
-    _In_ PDS_STREAM_CONTEXT StreamContext,
-    _In_ PFILE_DISPOSITION_INFORMATION_EX Disposition
-) {
-    if (FlagOn(Disposition->Flags, FILE_DISPOSITION_ON_CLOSE)) {
-        if (FlagOn(Disposition->Flags, FILE_DISPOSITION_DELETE))
-            DsFlowSetFlags(StreamContext, DS_MONITOR_FILE_DELETE_ON_CLOSE);
-        else
-            DsFlowClearFlags(StreamContext, DS_MONITOR_FILE_DELETE_ON_CLOSE);
-    }
 }

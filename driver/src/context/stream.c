@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,36 +16,18 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "stream.h"
-#include "util/string.h"
-#include "util/filename.h"
+#include <context.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitStreamContext)
 #pragma alloc_text(PAGE, DsFreeStreamContext)
 #endif
 
-NTSTATUS DsInitStreamContext(
-    _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
-    _In_ PDS_INSTANCE_CONTEXT InstanceContext,
-    _In_opt_ PDS_FILE_CONTEXT FileContext,
-    _Inout_ PDS_STREAM_CONTEXT StreamContext
-) {
+NTSTATUS DsInitStreamContext(_Inout_ PDS_STREAM_CONTEXT StreamContext) {
     DSR_INIT(APC_LEVEL);
-    PDS_MONITOR_CONTEXT MonitorContext = &StreamContext->MonitorContext;
-    DSR_ASSERT(DsInitMonitorContext(MonitorContext, &FileNameInfo->Stream, InstanceContext));
-    if (DsIsDefaultStream(&FileNameInfo->Stream)) {
-        SetFlag(MonitorContext->Flags, DS_MONITOR_FILE_DEFAULT_STREAM);
-    }
-    if (FileContext != NULL) {
-        StreamContext->FileContext = FileContext;
-        FltReferenceContext(FileContext);
-    }
-    DSR_CLEANUP_EMPTY();
+    DSR_CLEANUP { }
     return DSR_STATUS;
 }
 
-VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context) {
-    DsFreeMonitorContext(&Context->MonitorContext);
-    FltReleaseContextSafe(Context->FileContext);
+VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT StreamContext) {
 }

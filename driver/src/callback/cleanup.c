@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,9 +16,8 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "cleanup.h"
-#include "context/stream.h"
-#include "flow.h"
+#include <callback.h>
+#include <context.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsPreCleanupCallback)
@@ -36,22 +35,10 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
     PDS_STREAM_CONTEXT StreamContext = NULL;
     DSR_STATUS = FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext);
     if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED) {
-        DSR_STATUS = STATUS_SUCCESS;
-        DSR_CLEANUP();
+        DSR_RESET();
+        DSR_GOTO_CLEANUP();
     }
-    DSR_CLEANUP_ON_FAIL();
-
-    PDS_FILE_CONTEXT FileContext = StreamContext->FileContext;
-
-    DsFlowLock(StreamContext);
-    DsFlowDecrementHandles(StreamContext);
-    DsLogTrace("Cleanup. Stream: %wZ. Count: %d.", &StreamContext->MonitorContext.Name, StreamContext->MonitorContext.HandleCount);
-    if (FileContext != NULL) {
-        DsLogTrace("Cleanup. File: %wZ. Count: %d.", &FileContext->MonitorContext.Name, FileContext->MonitorContext.HandleCount);
-    }
-    DsFlowRelease(StreamContext);
-
-    DSR_CLEANUP_EMPTY();
+    DSR_CLEANUP { }
     FltReleaseContextSafe(StreamContext);
     return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }

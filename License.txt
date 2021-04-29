@@ -1,4 +1,4 @@
-Copyright (c) 2020 Denis Pakhorukov <xpolycone@gmail.com>.
+Copyright (c) 2021 Denis Pakhorukov <xpolycone@gmail.com>.
 The Datashred project is licensed under the terms of the GPLv3 (only).
 
 The full text of the GPLv3 follows below.

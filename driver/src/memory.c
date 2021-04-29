@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,8 +16,22 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
-#include "common.h"
+#include <driver.h>
 
-BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName);
-BOOLEAN DsIsDefaultStream(_In_ PUNICODE_STRING StreamName);
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text(PAGE, DsMemAlloc)
+#pragma alloc_text(PAGE, DsMemFree)
+#endif
+
+NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer) {
+    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DS_DEFAULT_POOL_TAG);
+    if (pointer == NULL) {
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+    *Pointer = pointer;
+    return STATUS_SUCCESS;
+}
+
+VOID DsMemFree(_In_ PVOID Pointer) {
+    ExFreePoolWithTag(Pointer, DS_DEFAULT_POOL_TAG);
+}

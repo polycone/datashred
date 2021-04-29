@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,16 +16,14 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "string.h"
-#include "memory.h"
+#include <driver.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsCreateUnicodeString)
-#pragma alloc_text(PAGE, DsEnsureUnicodeStringLength)
 #pragma alloc_text(PAGE, DsFreeUnicodeString)
 #endif
 
-NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, _In_ USHORT Length) {
+NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, USHORT Length) {
     DSR_INIT(APC_LEVEL);
     PVOID buffer = NULL;
     if (Length > 0) {
@@ -34,25 +32,7 @@ NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, _In_ USHORT Lengt
     String->Buffer = (PWCH)buffer;
     String->Length = 0;
     String->MaximumLength = Length;
-    DSR_CLEANUP_EMPTY();
-    return DSR_STATUS;
-}
-
-NTSTATUS DsEnsureUnicodeStringLength(_Inout_ PUNICODE_STRING String, _In_ USHORT Length) {
-    DSR_INIT(APC_LEVEL);
-    if (String->MaximumLength >= Length) {
-        String->Length = 0;
-        return DSR_STATUS;
-    }
-    PVOID buffer = NULL;
-    DSR_ASSERT(DsMemAlloc(Length, &buffer));
-    if (String->Buffer != NULL) {
-        DsMemFree(String->Buffer);
-    }
-    String->Buffer = (PWCH)buffer;
-    String->Length = 0;
-    String->MaximumLength = Length;
-    DSR_CLEANUP_EMPTY();
+    DSR_CLEANUP { }
     return DSR_STATUS;
 }
 

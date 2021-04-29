@@ -101,7 +101,8 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{36226b5a-e445-44fe-ad8a-0500b3794f3a}";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -111,6 +112,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,7 +121,8 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{36226b5a-e445-44fe-ad8a-0500b3794f3a}";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -129,6 +132,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -140,30 +144,18 @@
     <ClCompile Include="src\callback\information.c" />
     <ClCompile Include="src\context\file.c" />
     <ClCompile Include="src\context\instance.c" />
-    <ClCompile Include="src\context\monitor.c" />
     <ClCompile Include="src\context\stream.c" />
     <ClCompile Include="src\driver.c" />
-    <ClCompile Include="src\flow.c" />
-    <ClCompile Include="src\util\filename.c" />
-    <ClCompile Include="src\util\memory.c" />
-    <ClCompile Include="src\util\string.c" />
-    <ClCompile Include="src\util\volume.c" />
+    <ClCompile Include="src\file.c" />
+    <ClCompile Include="src\memory.c" />
+    <ClCompile Include="src\string.c" />
+    <ClCompile Include="src\volume.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\callback.h" />
-    <ClInclude Include="src\callback\cleanup.h" />
-    <ClInclude Include="src\callback\create.h" />
-    <ClInclude Include="src\callback\information.h" />
-    <ClInclude Include="src\common.h" />
-    <ClInclude Include="src\context\monitor.h" />
-    <ClInclude Include="src\context\file.h" />
-    <ClInclude Include="src\context\instance.h" />
-    <ClInclude Include="src\context\stream.h" />
-    <ClInclude Include="src\flow.h" />
-    <ClInclude Include="src\util\filename.h" />
-    <ClInclude Include="src\util\memory.h" />
-    <ClInclude Include="src\util\string.h" />
-    <ClInclude Include="src\util\volume.h" />
+    <ClInclude Include="src\context.h" />
+    <ClInclude Include="src\driver.h" />
+    <ClInclude Include="src\dsr.h" />
   </ItemGroup>
   <ItemGroup>
     <Inf Include="datashred.inf" />

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,35 +16,18 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "file.h"
-
-static VOID DsExtractFileName(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Out_ PUNICODE_STRING FileName);
+#include <context.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitFileContext)
 #pragma alloc_text(PAGE, DsFreeFileContext)
-#pragma alloc_text(PAGE, DsExtractFileName)
 #endif
 
-NTSTATUS DsInitFileContext(
-    _Inout_ PDS_FILE_CONTEXT FileContext,
-    _In_ PFLT_FILE_NAME_INFORMATION FileNameInfo,
-    _In_ PDS_INSTANCE_CONTEXT InstanceContext
-) {
+NTSTATUS DsInitFileContext(_Inout_ PDS_FILE_CONTEXT FileContext) {
     DSR_INIT(APC_LEVEL);
-    UNICODE_STRING fileName;
-    DsExtractFileName(FileNameInfo, &fileName);
-    DSR_ASSERT(DsInitMonitorContext(&FileContext->MonitorContext, &fileName, InstanceContext));
-    DSR_CLEANUP_EMPTY();
+    DSR_CLEANUP { }
     return DSR_STATUS;
 }
 
 VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT FileContext) {
-    DsFreeMonitorContext(&FileContext->MonitorContext);
-}
-
-static VOID DsExtractFileName(_In_ PFLT_FILE_NAME_INFORMATION FileNameInfo, _Out_ PUNICODE_STRING FileName) {
-    FileName->Buffer = FileNameInfo->Name.Buffer;
-    FileName->Length = FileNameInfo->Name.Length - FileNameInfo->Stream.Length;
-    FileName->MaximumLength = FileName->Length;
 }

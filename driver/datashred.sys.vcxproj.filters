@@ -14,19 +14,22 @@
     <ClCompile Include="src\driver.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\util\memory.c">
+    <ClCompile Include="src\volume.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\util\string.c">
+    <ClCompile Include="src\memory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\util\volume.c">
+    <ClCompile Include="src\string.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\context\file.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\context\instance.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\callback\create.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\context\stream.c">
@@ -35,63 +38,24 @@
     <ClCompile Include="src\callback\cleanup.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\context\file.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\flow.c">
+    <ClCompile Include="src\callback\create.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\callback\information.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\context\monitor.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\util\filename.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\common.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\util\memory.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\util\string.h">
+    <ClInclude Include="src\driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\util\volume.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\context\instance.h">
+    <ClInclude Include="src\context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\callback.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\callback\create.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\context\stream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\util\filename.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\callback\cleanup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\context\file.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\flow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\callback\information.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\context\monitor.h">
+    <ClInclude Include="src\dsr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

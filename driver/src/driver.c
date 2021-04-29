@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,29 +16,22 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "common.h"
-#include "util/volume.h"
-#include "util/memory.h"
-#include "util/string.h"
-#include "context/instance.h"
-#include "context/stream.h"
-#include "context/file.h"
-#include "callback.h"
+#include <driver.h>
+#include <context.h>
+#include <callback.h>
 
 PFLT_FILTER Filter = NULL;
 
-NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
-static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT driverObject, _In_ PUNICODE_STRING pRegistryPath);
-static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS flags);
-
+NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath);
+static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath);
+static NTSTATUS DsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags);
 static NTSTATUS FLTAPI DsInstanceSetupCallback(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
-    _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
-    _In_ DEVICE_TYPE VolumeDeviceType,
-    _In_ FLT_FILESYSTEM_TYPE VolumeFilesystemType
+    FLT_INSTANCE_SETUP_FLAGS Flags,
+    DEVICE_TYPE VolumeDeviceType,
+    FLT_FILESYSTEM_TYPE VolumeFilesystemType
 );
-
-static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
+static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, FLT_CONTEXT_TYPE ContextType);
 static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
 static VOID FLTAPI DsFileContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType);
 
@@ -48,85 +41,91 @@ static VOID FLTAPI DsFileContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ 
 #pragma alloc_text(PAGE, DsFilterUnload)
 #pragma alloc_text(PAGE, DsInstanceSetupCallback)
 #pragma alloc_text(PAGE, DsInstanceContextCleanupCallback)
-#pragma alloc_text(PAGE, DsStreamContextCleanupCallback)
-#pragma alloc_text(PAGE, DsFileContextCleanupCallback)
 #endif
 
-static const FLT_CONTEXT_REGISTRATION contexts[] = {
-    { FLT_INSTANCE_CONTEXT, EMPTY_FLAGS, DsInstanceContextCleanupCallback, sizeof(DS_INSTANCE_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
-    { FLT_STREAM_CONTEXT, EMPTY_FLAGS, DsStreamContextCleanupCallback, sizeof(DS_STREAM_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
-    { FLT_FILE_CONTEXT, EMPTY_FLAGS, DsFileContextCleanupCallback, sizeof(DS_FILE_CONTEXT), DS_DEFAULT_POOL_TAG, EMPTY_CALLBACK, EMPTY_CALLBACK, NULL },
+static const FLT_CONTEXT_REGISTRATION Contexts[] = {
+    { FLT_INSTANCE_CONTEXT, NO_FLAGS, DsInstanceContextCleanupCallback, sizeof(DS_INSTANCE_CONTEXT), DS_DEFAULT_POOL_TAG, NO_CALLBACK, NO_CALLBACK, NULL },
+    { FLT_STREAM_CONTEXT, NO_FLAGS, DsStreamContextCleanupCallback, sizeof(DS_STREAM_CONTEXT), DS_DEFAULT_POOL_TAG, NO_CALLBACK, NO_CALLBACK, NULL },
+    { FLT_FILE_CONTEXT, NO_FLAGS, DsFileContextCleanupCallback, sizeof(DS_FILE_CONTEXT), DS_DEFAULT_POOL_TAG, NO_CALLBACK, NO_CALLBACK, NULL },
     { FLT_CONTEXT_END }
 };
 
-static const FLT_OPERATION_REGISTRATION callbacks[] = {
-    { IRP_MJ_CREATE, EMPTY_FLAGS, DsPreCreateCallback, DsPostCreateCallback, NULL },
+static const FLT_OPERATION_REGISTRATION Callbacks[] = {
+    { IRP_MJ_CREATE, NO_FLAGS, DsPreCreateCallback, DsPostCreateCallback, NULL },
     { IRP_MJ_SET_INFORMATION, FLTFL_OPERATION_REGISTRATION_SKIP_PAGING_IO, DsPreSetInformationCallback, DsPostSetInformationCallback, NULL },
-    { IRP_MJ_CLEANUP, EMPTY_FLAGS, DsPreCleanupCallback, EMPTY_CALLBACK, NULL },
+    { IRP_MJ_CLEANUP, NO_FLAGS, DsPreCleanupCallback, NO_CALLBACK, NULL },
     { IRP_MJ_OPERATION_END }
 };
 
-static const FLT_REGISTRATION filterRegistration = {
+static const FLT_REGISTRATION FilterRegistration = {
     sizeof(FLT_REGISTRATION),
     FLT_REGISTRATION_VERSION,
-    EMPTY_FLAGS,
-    contexts,
-    callbacks,
+    NO_FLAGS,
+    Contexts,
+    Callbacks,
     DsFilterUnload,
     DsInstanceSetupCallback,
-    EMPTY_CALLBACK,
-    EMPTY_CALLBACK,
-    EMPTY_CALLBACK,
-    EMPTY_CALLBACK,
-    EMPTY_CALLBACK,
-    EMPTY_CALLBACK,
-    EMPTY_CALLBACK,
-    EMPTY_CALLBACK
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK,
+    NO_CALLBACK
 };
 
-NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRegistryPath) {
-    return DsFilterLoad(pDriverObject, pRegistryPath);
+NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath) {
+    return DsFilterLoad(DriverObject, RegistryPath);
 }
 
-static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT pDriverObject, _In_ PUNICODE_STRING pRegistryPath) {
-    UNREFERENCED_PARAMETER(pRegistryPath);
+static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath) {
     DSR_INIT(APC_LEVEL);
-    DSR_ASSERT(FltRegisterFilter(pDriverObject, &filterRegistration, &Filter));
+    DSR_ASSERT(FltRegisterFilter(DriverObject, &FilterRegistration, &Filter));
     DSR_ASSERT(FltStartFiltering(Filter));
-    DSR_CLEANUP_START();
-    if (Filter != NULL) {
-        FltUnregisterFilter(Filter);
+    DSR_CLEANUP {
+        DSR_LOG_UNEXPECTED_ERROR();
+        if (Filter != NULL)
+            FltUnregisterFilter(Filter);
     }
-    DSR_CLEANUP_END();
     return DSR_STATUS;
 }
 
-static NTSTATUS DsFilterUnload(_In_ FLT_FILTER_UNLOAD_FLAGS Flags) {
-    UNREFERENCED_PARAMETER(Flags);
-    DSR_INIT(APC_LEVEL);
+static NTSTATUS DsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags) {
+    DSR_INIT(PASSIVE_LEVEL);
     FltUnregisterFilter(Filter);
     return DSR_STATUS;
 }
 
 static NTSTATUS FLTAPI DsInstanceSetupCallback(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
-    _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
-    _In_ DEVICE_TYPE VolumeDeviceType,
-    _In_ FLT_FILESYSTEM_TYPE VolumeFilesystemType
+    FLT_INSTANCE_SETUP_FLAGS Flags,
+    DEVICE_TYPE VolumeDeviceType,
+    FLT_FILESYSTEM_TYPE VolumeFilesystemType
 ) {
-    UNREFERENCED_PARAMETER(Flags);
     DSR_INIT(PASSIVE_LEVEL);
     DsLogTrace(
         "Trying to setup an instance. DE: 0x%08X, FS: 0x%08X, FL: 0x%08X.",
         VolumeDeviceType, VolumeFilesystemType, Flags
     );
-
     if (VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
         return STATUS_FLT_DO_NOT_ATTACH;
     if (VolumeFilesystemType == FLT_FSTYPE_RAW)
         return STATUS_FLT_DO_NOT_ATTACH;
 
-    PDS_INSTANCE_CONTEXT context = EMPTY_CONTEXT;
+    PDS_INSTANCE_CONTEXT context = NO_CONTEXT;
+
+#ifdef ATTACH_VOLUME
+    DECLARE_CONST_UNICODE_STRING(AttachVolume, ATTACH_VOLUME);
+    UNICODE_STRING guid = EmptyUnicodeString;
+    DsInitUnicodeString(&guid);
+    DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &guid));
+    BOOLEAN attach = RtlCompareUnicodeString(&guid, &AttachVolume, FALSE) == 0;
+    DsFreeUnicodeString(&guid);
+    if (!attach)
+        return STATUS_FLT_DO_NOT_ATTACH;
+#endif
+
     DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
     DSR_ASSERT(DsInitInstanceContext(FltObjects, context));
     DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
@@ -143,15 +142,14 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
         context->VolumeProperties.SectorSize
     );
 
-    DSR_CLEANUP_EMPTY();
+    DSR_CLEANUP { }
     FltReleaseContextSafe(context);
     return DSR_STATUS;
 }
 
-static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
-    UNREFERENCED_PARAMETER(ContextType);
+static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, FLT_CONTEXT_TYPE ContextType) {
     PDS_INSTANCE_CONTEXT context = (PDS_INSTANCE_CONTEXT)Context;
-    DsLogInfo(
+    DsLogTrace(
         "Instance context is being cleaned up.\n"
         "  - Volume: %wZ.",
         &context->VolumeGuid
@@ -159,16 +157,12 @@ static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, _
     DsFreeInstanceContext(context);
 }
 
-static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
-    UNREFERENCED_PARAMETER(ContextType);
-    PDS_STREAM_CONTEXT context = (PDS_STREAM_CONTEXT)Context;
-    DsLogTrace("Stream context is being cleaned up. Stream name: %wZ.", &context->MonitorContext.Name);
-    DsFreeStreamContext(context);
+static VOID FLTAPI DsFileContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
+    PDS_FILE_CONTEXT context = (PDS_FILE_CONTEXT)Context;
+    DsFreeFileContext(context);
 }
 
-static VOID FLTAPI DsFileContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
-    UNREFERENCED_PARAMETER(ContextType);
-    PDS_FILE_CONTEXT context = (PDS_FILE_CONTEXT)Context;
-    DsLogTrace("File context is being cleaned up. File name: %wZ.", &context->MonitorContext.Name);
-    DsFreeFileContext(context);
+static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, _In_ FLT_CONTEXT_TYPE ContextType) {
+    PDS_STREAM_CONTEXT context = (PDS_STREAM_CONTEXT)Context;
+    DsFreeStreamContext(context);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,7 +16,7 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "filename.h"
+#include <driver.h>
 
 static DECLARE_CONST_UNICODE_STRING(DataStreamTypeName, L"$DATA");
 
@@ -26,9 +26,8 @@ static DECLARE_CONST_UNICODE_STRING(DataStreamTypeName, L"$DATA");
 #endif
 
 BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName) {
-    if (StreamName->Length == 0) {
+    if (StreamName->Length == 0)
         return TRUE;
-    }
     int typeNameIndex = -1;
     for (int i = (StreamName->Length / sizeof(WCHAR)) - 1; i >= 0; --i) {
         if (StreamName->Buffer[i] == L':') {
@@ -36,23 +35,16 @@ BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName) {
             break;
         }
     }
-    if (typeNameIndex == 1) {
+    if (typeNameIndex == 1)
         return TRUE;
-    }
     USHORT typeNameLength = StreamName->Length - (USHORT)typeNameIndex * sizeof(WCHAR);
     UNICODE_STRING typeName = { typeNameLength, typeNameLength, &StreamName->Buffer[typeNameIndex] };
     return RtlCompareUnicodeString(&typeName, &DataStreamTypeName, TRUE) == 0;
 }
 
 BOOLEAN DsIsDefaultStream(_In_ PUNICODE_STRING StreamName) {
-    if (StreamName->Length == 0) {
+    if (StreamName->Length == 0)
         return TRUE;
-    }
-    if (StreamName->Length >= 2 &&
-        StreamName->Buffer[0] == L':' &&
-        StreamName->Buffer[1] == L':'
-    ) {
-        return TRUE;
-    }
-    return FALSE;
+    BOOLEAN doubleDot = StreamName->Length >= 2 && StreamName->Buffer[0] == L':' && StreamName->Buffer[1] == L':';
+    return doubleDot;
 }

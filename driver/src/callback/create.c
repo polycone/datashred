@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Denis Pakhorukov <xpolycone@gmail.com>
+ * Copyright (C) 2021 Denis Pakhorukov <xpolycone@gmail.com>
  *
  * This file is part of Datashred.
  *
@@ -16,10 +16,8 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "create.h"
-#include "context/stream.h"
-#include "util/filename.h"
-#include "flow.h"
+#include <callback.h>
+#include <context.h>
 
 typedef struct _DS_INITIALIZATION_CONTEXT {
     PCFLT_RELATED_OBJECTS FltObjects;
@@ -44,7 +42,6 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Out_ PVOID *CompletionContext
 ) {
-    UNREFERENCED_PARAMETER(FltObjects);
     DSR_INIT(PASSIVE_LEVEL);
     *CompletionContext = NULL;
 
@@ -68,12 +65,12 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     }
 
     *CompletionContext = fileNameInfo;
-    DSR_CLEANUP_START();
-    if (fileNameInfo != NULL) {
-        FltReleaseFileNameInformation(fileNameInfo);
+
+    DSR_CLEANUP {
+        if (fileNameInfo != NULL)
+            FltReleaseFileNameInformation(fileNameInfo);
+        Data->IoStatus.Status = DSR_STATUS;
     }
-    Data->IoStatus.Status = DSR_STATUS;
-    DSR_CLEANUP_END();
 
     return DSR_SUCCESS ? FLT_PREOP_SYNCHRONIZE : FLT_PREOP_COMPLETE;
 }
@@ -100,43 +97,30 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     context.FileNameInfo = (PFLT_FILE_NAME_INFORMATION)CompletionContext;
 
     if (FlagOn(Flags, FLTFL_POST_OPERATION_DRAINING))
-        DSR_CLEANUP();
+        DSR_GOTO_CLEANUP();
     if (!NT_SUCCESS(Data->IoStatus.Status))
-        DSR_CLEANUP();
+        DSR_GOTO_CLEANUP();
     if (Data->IoStatus.Status == STATUS_REPARSE)
-        DSR_CLEANUP();
+        DSR_GOTO_CLEANUP();
 
     FILE_STANDARD_INFORMATION fileStandardInfo;
     DSR_ASSERT(DsQueryStandardInformationFile(FltObjects, &fileStandardInfo));
     if (fileStandardInfo.Directory)
-        DSR_CLEANUP();
+        DSR_GOTO_CLEANUP();
 
     DSR_ASSERT(FltParseFileNameInformation(context.FileNameInfo));
     if (!DsIsDataStream(&context.FileNameInfo->Stream))
-        DSR_CLEANUP();
+        DSR_GOTO_CLEANUP();
 
     DSR_ASSERT(FltGetInstanceContext(FltObjects->Instance, &context.InstanceContext));
     DSR_ASSERT(SetupFileContext(&context));
     DSR_ASSERT(SetupStreamContext(&context));
 
-    PDS_FILE_CONTEXT FileContext = context.FileContext;
-    PDS_STREAM_CONTEXT StreamContext = context.StreamContext;
-
-    DsFlowLock(StreamContext);
-    DsFlowIncrementHandles(StreamContext);
-    DsLogTrace("Create. Stream: %wZ. Count: %d.", &StreamContext->MonitorContext.Name, StreamContext->MonitorContext.HandleCount);
-    if (FileContext != NULL) {
-        DsLogTrace("Create. File: %wZ. Count: %d.", &FileContext->MonitorContext.Name, FileContext->MonitorContext.HandleCount);
+    DSR_CLEANUP {
+        // TODO: Check for STATUS_STREAM_CONTEXT_NOT_SUPPORTED
+        // TODO: Use FltSendMessage to signal user-mode agent that a file cannot be processed.
+        // TODO: Depening on an agent response try to call FltCancelFileOpen or just finish processing.
     }
-    if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DELETE_ON_CLOSE))
-        DsFlowSetFlags(StreamContext, DS_MONITOR_FILE_DELETE_ON_CLOSE);
-    DsFlowRelease(StreamContext);
-
-    DSR_CLEANUP_START();
-    // TODO: Check for STATUS_STREAM_CONTEXT_NOT_SUPPORTED
-    // TODO: Use FltSendMessage to signal user-mode agent that a file cannot be processed.
-    // TODO: Depening on an agent response try to call FltCancelFileOpen or just finish processing.
-    DSR_CLEANUP_END();
 
     FltReleaseContextSafe(context.StreamContext);
     FltReleaseContextSafe(context.FileContext);
@@ -158,7 +142,7 @@ static NTSTATUS SetupFileContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
     DSR_STATUS = FltGetFileContext(Instance, FileObject, &fileContext);
     if (DSR_STATUS == STATUS_NOT_FOUND) {
         DSR_ASSERT(FltAllocateContext(Filter, FLT_FILE_CONTEXT, sizeof(DS_FILE_CONTEXT), PagedPool, &fileContext));
-        DSR_ASSERT(DsInitFileContext(fileContext, Context->FileNameInfo, Context->InstanceContext));
+        DSR_ASSERT(DsInitFileContext(fileContext));
         PDS_FILE_CONTEXT oldContext = NULL;
         DSR_STATUS = FltSetFileContext(Instance, FileObject, FLT_FILE_CONTEXT, fileContext, &oldContext);
         if (DSR_STATUS == STATUS_FLT_CONTEXT_ALREADY_DEFINED) {
@@ -171,10 +155,9 @@ static NTSTATUS SetupFileContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
     DSR_CLEANUP_ON_FAIL();
 
     Context->FileContext = fileContext;
-    DSR_CLEANUP_START();
-    if (fileContext != NULL)
-        FltReleaseContext(fileContext);
-    DSR_CLEANUP_END();
+    DSR_CLEANUP {
+        FltReleaseContextSafe(fileContext);
+    }
     return DSR_STATUS;
 }
 
@@ -190,7 +173,7 @@ static NTSTATUS SetupStreamContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
     DSR_STATUS = FltGetStreamContext(Instance, FileObject, &streamContext);
     if (DSR_STATUS == STATUS_NOT_FOUND) {
         DSR_ASSERT(FltAllocateContext(Filter, FLT_STREAM_CONTEXT, sizeof(DS_STREAM_CONTEXT), PagedPool, &streamContext));
-        DSR_ASSERT(DsInitStreamContext(Context->FileNameInfo, Context->InstanceContext, Context->FileContext, streamContext));
+        DSR_ASSERT(DsInitStreamContext(streamContext));
         PDS_STREAM_CONTEXT oldContext = NULL;
         DSR_STATUS = FltSetStreamContext(Instance, FileObject, FLT_STREAM_CONTEXT, streamContext, &oldContext);
         if (DSR_STATUS == STATUS_FLT_CONTEXT_ALREADY_DEFINED) {
@@ -203,9 +186,8 @@ static NTSTATUS SetupStreamContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
     DSR_CLEANUP_ON_FAIL();
 
     Context->StreamContext = streamContext;
-    DSR_CLEANUP_START();
-    if (streamContext != NULL)
-        FltReleaseContext(streamContext);
-    DSR_CLEANUP_END();
+    DSR_CLEANUP {
+        FltReleaseContextSafe(streamContext);
+    }
     return DSR_STATUS;
 }
