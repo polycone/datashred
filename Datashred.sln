@@ -9,7 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "datashred-tests", "tests\da
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6EFB0780-DDB1-466E-AC54-043587CABB5C}"
 	ProjectSection(SolutionItems) = preProject
-		License.txt = License.txt
+		LICENSE.md = LICENSE.md
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global
