@@ -22,8 +22,12 @@
 #include <dsr.h>
 
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
+
+#ifdef DBG
 #pragma warning(disable:4100) // Unreferenced formal parameter
 #pragma warning(disable:4102) // Unreferenced label
+#endif
+
 //#pragma warning(disable:4214) // Custom bit fields type
 //#pragma warning(disable:4201) // Nameless structs/unions
 
