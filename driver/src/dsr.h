@@ -17,9 +17,13 @@
  */
 
 #pragma once
-#include <wdm.h>
+#include <driver.h>
 
 /* Driver simple routines */
+
+#define __VA_PASS__(x) x
+#define __GET_MACRO_2__(_1, _2, name, ...) name
+#define __GET_MACRO_1__(_1, name, ...) name
 
 #ifdef DBG
 #define __IRQL_ASSERT(irql)                         \
@@ -29,27 +33,38 @@
     NOP_FUNCTION
 #endif // DBG
 
-#define DSR_INIT(irql)                              \
+#define DSR_SUPPRESS(s)                             \
+    if (DSR_STATUS == s)                            \
+        DSR_STATUS = STATUS_SUCCESS;
+
+#define DSR_STATUS                                  __status
+#define DSR_SUCCESS                                 NT_SUCCESS(DSR_STATUS)
+
+#define DSR_ENTER(irql)                             \
     __IRQL_ASSERT(irql);                            \
-    NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS DSR_STATUS = STATUS_SUCCESS;
 
-#define __VA_PASS__(x) x
-#define __GET_MACRO_2__(_1, _2, name, ...) name
+#define DSR_LEAVE()                                 \
+        goto __exit;
 
-#define DSR_GOTO_CLEANUP() goto cleanup;
-#define DSR_RESET() status = STATUS_SUCCESS;
+#define DSR_RETURN(status)                          \
+    {                                               \
+        DSR_STATUS = status;                        \
+        goto __exit;                                \
+    }
 
-#define DSR_CLEANUP_ON_FAIL()                       \
-    if (!NT_SUCCESS(status))                        \
-        DSR_GOTO_CLEANUP();
+#define DSR_ASSERT_SUCCESS()                        \
+    if (!DSR_SUCCESS)                               \
+        goto __error_handler;
 
-#define __DSR_ASSERT_WITH_SUPPRESS(op, s)           \
-    status = op;                                    \
-    s;                                              \
-    DSR_CLEANUP_ON_FAIL();
+#define __DSR_ASSERT_WITH_SUPPRESS(status, suppress)\
+    DSR_STATUS = status;                            \
+    suppress;                                       \
+    DSR_ASSERT_SUCCESS();
 
-#define __DSR_ASSERT(op)                            \
-    __DSR_ASSERT_WITH_SUPPRESS(op, )
+#define __DSR_ASSERT(status)                        \
+    DSR_STATUS = status;                            \
+    DSR_ASSERT_SUCCESS();
 
 #define DSR_ASSERT(...)                             \
     __VA_PASS__(__GET_MACRO_2__(                    \
@@ -59,16 +74,20 @@
                 )(__VA_ARGS__)                      \
     )
 
-#define DSR_SUPPRESS(s)                             \
-    if (status == s)                                \
-        status = STATUS_SUCCESS;
+#if defined(DBG) && defined(RAISE_ASSERTION_FAILURE)
+#define DsRaiseAssertonFailure()                    DbgRaiseAssertionFailure()
+#else
+#define DsRaiseAssertonFailure()                    NOP_FUNCTION
+#endif // RAISE_ASSERTION_FAILURE
 
-#define DSR_CLEANUP                                 \
-cleanup:                                            \
-    if (!NT_SUCCESS(status))
-
-#define DSR_STATUS                                  status
-#define DSR_SUCCESS                                 NT_SUCCESS(status)
+#define __DSR_ERROR_STRING                          "Unexpected error: 0x%08X"
+#define DSR_ERROR_HANDLER(block)                    \
+       goto __exit;                                 \
+    __error_handler:                                \
+       DsLogError(__DSR_ERROR_STRING, DSR_STATUS);  \
+       DsRaiseAssertonFailure();                    \
+       block                                        \
+    __exit:
 
 #define DSR_DECLARE(var, type)                      \
     type var;                                       \

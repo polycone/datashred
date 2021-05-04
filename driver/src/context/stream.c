@@ -17,6 +17,7 @@
  */
 
 #include <context.h>
+#include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitStreamContext)
@@ -24,8 +25,8 @@
 #endif
 
 NTSTATUS DsInitStreamContext(_Inout_ PDS_STREAM_CONTEXT StreamContext) {
-    DSR_INIT(APC_LEVEL);
-    DSR_CLEANUP { }
+    DSR_ENTER(APC_LEVEL);
+    DSR_ERROR_HANDLER({});
     return DSR_STATUS;
 }
 

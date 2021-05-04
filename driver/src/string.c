@@ -17,6 +17,7 @@
  */
 
 #include <driver.h>
+#include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsCreateUnicodeString)
@@ -24,7 +25,7 @@
 #endif
 
 NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, USHORT Length) {
-    DSR_INIT(APC_LEVEL);
+    DSR_ENTER(APC_LEVEL);
     PVOID buffer = NULL;
     if (Length > 0) {
         DSR_ASSERT(DsMemAlloc(Length, &buffer));
@@ -32,7 +33,7 @@ NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, USHORT Length) {
     String->Buffer = (PWCH)buffer;
     String->Length = 0;
     String->MaximumLength = Length;
-    DSR_CLEANUP { }
+    DSR_ERROR_HANDLER({});
     return DSR_STATUS;
 }
 

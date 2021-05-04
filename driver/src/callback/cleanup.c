@@ -18,6 +18,7 @@
 
 #include <callback.h>
 #include <context.h>
+#include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsPreCleanupCallback)
@@ -29,16 +30,13 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
     _Outptr_result_maybenull_ PVOID *CompletionContext
 ) {
     UNREFERENCED_PARAMETER(Data);
-    DSR_INIT(PASSIVE_LEVEL);
+    DSR_ENTER(PASSIVE_LEVEL);
     *CompletionContext = NULL;
-
     PDS_STREAM_CONTEXT StreamContext = NULL;
     DSR_STATUS = FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext);
-    if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED) {
-        DSR_RESET();
-        DSR_GOTO_CLEANUP();
-    }
-    DSR_CLEANUP { }
+    if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED)
+        DSR_RETURN(STATUS_SUCCESS);
+    DSR_ERROR_HANDLER({});
     FltReleaseContextSafe(StreamContext);
     return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }

@@ -101,7 +101,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{36226b5a-e445-44fe-ad8a-0500b3794f3a}";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{36226b5a-e445-44fe-ad8a-0500b3794f3a}";RAISE_ASSERTION_FAILURE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -121,7 +121,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{36226b5a-e445-44fe-ad8a-0500b3794f3a}";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{36226b5a-e445-44fe-ad8a-0500b3794f3a}";RAISE_ASSERTION_FAILURE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>

@@ -18,6 +18,7 @@
 
 #include <callback.h>
 #include <context.h>
+#include <dsr.h>
 
 typedef struct _DS_INITIALIZATION_CONTEXT {
     PCFLT_RELATED_OBJECTS FltObjects;
@@ -42,17 +43,17 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Out_ PVOID *CompletionContext
 ) {
-    DSR_INIT(PASSIVE_LEVEL);
+    DSR_ENTER(PASSIVE_LEVEL);
     *CompletionContext = NULL;
+    PFLT_FILE_NAME_INFORMATION fileNameInfo = NULL;
 
     if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DIRECTORY_FILE))
-        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+        DSR_RETURN(FLT_PREOP_SUCCESS_NO_CALLBACK);
     if (FlagOn(Data->Iopb->OperationFlags, SL_OPEN_PAGING_FILE))
-        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+        DSR_RETURN(FLT_PREOP_SUCCESS_NO_CALLBACK);
     if (FlagOn(Data->Iopb->TargetFileObject->Flags, FO_VOLUME_OPEN))
-        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+        DSR_RETURN(FLT_PREOP_SUCCESS_NO_CALLBACK);
 
-    PFLT_FILE_NAME_INFORMATION fileNameInfo = NULL;
     DSR_ASSERT(FltGetFileNameInformation(Data, FLT_FILE_NAME_OPENED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP, &fileNameInfo));
 
     ULONG disposition = Data->Iopb->Parameters.Create.Options >> 24;
@@ -66,13 +67,14 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
 
     *CompletionContext = fileNameInfo;
 
-    DSR_CLEANUP {
+    DSR_STATUS = DSR_SUCCESS ? FLT_PREOP_SYNCHRONIZE : FLT_PREOP_COMPLETE;
+    DSR_ERROR_HANDLER({
         if (fileNameInfo != NULL)
             FltReleaseFileNameInformation(fileNameInfo);
         Data->IoStatus.Status = DSR_STATUS;
-    }
+    });
 
-    return DSR_SUCCESS ? FLT_PREOP_SYNCHRONIZE : FLT_PREOP_COMPLETE;
+    return DSR_STATUS;
 }
 
 FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
@@ -81,7 +83,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     _In_ PVOID CompletionContext,
     _In_ FLT_POST_OPERATION_FLAGS Flags
 ) {
-    DSR_INIT(PASSIVE_LEVEL);
+    DSR_ENTER(PASSIVE_LEVEL);
 
     /*
         Ignore processing in case of:
@@ -97,30 +99,30 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     context.FileNameInfo = (PFLT_FILE_NAME_INFORMATION)CompletionContext;
 
     if (FlagOn(Flags, FLTFL_POST_OPERATION_DRAINING))
-        DSR_GOTO_CLEANUP();
+        DSR_LEAVE();
     if (!NT_SUCCESS(Data->IoStatus.Status))
-        DSR_GOTO_CLEANUP();
+        DSR_LEAVE();
     if (Data->IoStatus.Status == STATUS_REPARSE)
-        DSR_GOTO_CLEANUP();
+        DSR_LEAVE();
 
     FILE_STANDARD_INFORMATION fileStandardInfo;
     DSR_ASSERT(DsQueryStandardInformationFile(FltObjects, &fileStandardInfo));
     if (fileStandardInfo.Directory)
-        DSR_GOTO_CLEANUP();
+        DSR_LEAVE();
 
     DSR_ASSERT(FltParseFileNameInformation(context.FileNameInfo));
     if (!DsIsDataStream(&context.FileNameInfo->Stream))
-        DSR_GOTO_CLEANUP();
+        DSR_LEAVE();
 
     DSR_ASSERT(FltGetInstanceContext(FltObjects->Instance, &context.InstanceContext));
     DSR_ASSERT(SetupFileContext(&context));
     DSR_ASSERT(SetupStreamContext(&context));
 
-    DSR_CLEANUP {
+    DSR_ERROR_HANDLER({
         // TODO: Check for STATUS_STREAM_CONTEXT_NOT_SUPPORTED
         // TODO: Use FltSendMessage to signal user-mode agent that a file cannot be processed.
         // TODO: Depening on an agent response try to call FltCancelFileOpen or just finish processing.
-    }
+    });
 
     FltReleaseContextSafe(context.StreamContext);
     FltReleaseContextSafe(context.FileContext);
@@ -131,13 +133,13 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
 }
 
 static NTSTATUS SetupFileContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
-    DSR_INIT(APC_LEVEL);
+    DSR_ENTER(APC_LEVEL);
     PFLT_FILTER Filter = Context->FltObjects->Filter;
     PFLT_INSTANCE Instance = Context->FltObjects->Instance;
     PFILE_OBJECT FileObject = Context->FltObjects->FileObject;
     PDS_FILE_CONTEXT fileContext = NULL;
     if (!FltSupportsFileContextsEx(FileObject, Instance))
-        return STATUS_FILE_CONTEXT_NOT_SUPPORTED;
+        DSR_RETURN(STATUS_FILE_CONTEXT_NOT_SUPPORTED);
 
     DSR_STATUS = FltGetFileContext(Instance, FileObject, &fileContext);
     if (DSR_STATUS == STATUS_NOT_FOUND) {
@@ -149,20 +151,20 @@ static NTSTATUS SetupFileContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
             DsLogTrace("File context concurrent initialization detected.");
             FltReleaseContext(fileContext);
             fileContext = oldContext;
-            DSR_RESET();
+            DSR_STATUS = STATUS_SUCCESS;
         }
     }
-    DSR_CLEANUP_ON_FAIL();
+    DSR_ASSERT_SUCCESS();
 
     Context->FileContext = fileContext;
-    DSR_CLEANUP {
+    DSR_ERROR_HANDLER({
         FltReleaseContextSafe(fileContext);
-    }
+    });
     return DSR_STATUS;
 }
 
 static NTSTATUS SetupStreamContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
-    DSR_INIT(APC_LEVEL);
+    DSR_ENTER(APC_LEVEL);
     PFLT_FILTER Filter = Context->FltObjects->Filter;
     PFLT_INSTANCE Instance = Context->FltObjects->Instance;
     PFILE_OBJECT FileObject = Context->FltObjects->FileObject;
@@ -180,14 +182,14 @@ static NTSTATUS SetupStreamContext(_Inout_ PDS_INITIALIZTION_CONTEXT Context) {
             DsLogTrace("Stream context concurrent initialization detected.");
             FltReleaseContext(streamContext);
             streamContext = oldContext;
-            DSR_RESET();
+            DSR_STATUS = STATUS_SUCCESS;
         }
     }
-    DSR_CLEANUP_ON_FAIL();
+    DSR_ASSERT_SUCCESS();
 
     Context->StreamContext = streamContext;
-    DSR_CLEANUP {
+    DSR_ERROR_HANDLER({
         FltReleaseContextSafe(streamContext);
-    }
+    });
     return DSR_STATUS;
 }

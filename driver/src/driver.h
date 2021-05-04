@@ -19,13 +19,14 @@
 #pragma once
 #include <fltKernel.h>
 #include <dontuse.h>
-#include <dsr.h>
 
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
 #ifdef DBG
 #pragma warning(disable:4100) // Unreferenced formal parameter
 #pragma warning(disable:4102) // Unreferenced label
+#pragma warning(disable:4189) // Unreferenced local variable
+#pragma warning(disable:4702) // Unreacheable code
 #endif
 
 //#pragma warning(disable:4214) // Custom bit fields type
@@ -51,8 +52,6 @@
 #define DsLogError  NOP_FUNCTION
 #define DsLogTrace  NOP_FUNCTION
 #endif // DBG
-
-#define DSR_LOG_UNEXPECTED_ERROR()                  DsLogError("Unexpected error: 0x%08X", status);
 
 #define FltReleaseContextSafe(ctx)                  \
     if (ctx != NO_CONTEXT) {                        \
@@ -89,6 +88,7 @@ typedef struct _DS_FILESYSTEM_PROPERTIES {
 } DS_FILESYSTEM_PROPERTIES, *PDS_FILESYSTEM_PROPERTIES;
 
 NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
+NTSTATUS DsGetVolumeName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
 NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Out_ PDS_VOLUME_PROPERTIES VolumeProperties);
 NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Out_ PDS_FILESYSTEM_PROPERTIES Properties);
 NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, USHORT Length);

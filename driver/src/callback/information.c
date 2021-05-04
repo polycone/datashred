@@ -18,13 +18,14 @@
 
 #include <callback.h>
 #include <context.h>
+#include <dsr.h>
 
 FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreSetInformationCallback(
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Outptr_result_maybenull_ PVOID *CompletionContext
 ) {
-    DSR_INIT(PASSIVE_LEVEL);
+    DSR_ENTER(PASSIVE_LEVEL);
     *CompletionContext = NULL;
     if (FlagOn(Data->Flags, FLTFL_CALLBACK_DATA_FAST_IO_OPERATION))
         return FLT_PREOP_DISALLOW_FASTIO;
@@ -32,20 +33,18 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreSetInformationCallback(
     FLT_PREOP_CALLBACK_STATUS callbackStatus = FLT_PREOP_SUCCESS_WITH_CALLBACK;
     PDS_STREAM_CONTEXT StreamContext = NULL;
     DSR_STATUS = FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext);
-    if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED) {
-        DSR_STATUS = STATUS_SUCCESS;
-        DSR_GOTO_CLEANUP();
-    }
-    DSR_CLEANUP_ON_FAIL();
+    if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED)
+        DSR_LEAVE();
+    DSR_ASSERT_SUCCESS();
 
     *CompletionContext = StreamContext;
 
-    DSR_CLEANUP {
+    DSR_ERROR_HANDLER({
         Data->IoStatus.Status = DSR_STATUS;
         callbackStatus = FLT_PREOP_COMPLETE;
-    }
-        if (callbackStatus != FLT_PREOP_SUCCESS_WITH_CALLBACK)
-            FltReleaseContextSafe(StreamContext);
+    });
+    if (callbackStatus != FLT_PREOP_SUCCESS_WITH_CALLBACK)
+        FltReleaseContextSafe(StreamContext);
     return callbackStatus;
 }
 
@@ -55,13 +54,13 @@ FLT_POSTOP_CALLBACK_STATUS DsPostSetInformationCallback(
     _In_ PVOID CompletionContext,
     _In_ FLT_POST_OPERATION_FLAGS Flags
 ) {
-    DSR_INIT(PASSIVE_LEVEL);
+    DSR_ENTER(PASSIVE_LEVEL);
     PDS_STREAM_CONTEXT StreamContext = (PDS_STREAM_CONTEXT)CompletionContext;
 
     if (!NT_SUCCESS(Data->IoStatus.Status))
-        DSR_GOTO_CLEANUP();
+        DSR_LEAVE();
 
-    DSR_CLEANUP { }
+    DSR_ERROR_HANDLER({});
 
     FltReleaseContextSafe(StreamContext);
     return FLT_POSTOP_FINISHED_PROCESSING;

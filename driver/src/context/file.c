@@ -17,6 +17,7 @@
  */
 
 #include <context.h>
+#include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitFileContext)
@@ -24,8 +25,8 @@
 #endif
 
 NTSTATUS DsInitFileContext(_Inout_ PDS_FILE_CONTEXT FileContext) {
-    DSR_INIT(APC_LEVEL);
-    DSR_CLEANUP { }
+    DSR_ENTER(APC_LEVEL);
+    DSR_ERROR_HANDLER({});
     return DSR_STATUS;
 }
 

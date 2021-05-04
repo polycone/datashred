@@ -17,6 +17,7 @@
  */
 
 #include <driver.h>
+#include <dsr.h>
 #include <context.h>
 #include <callback.h>
 
@@ -80,19 +81,18 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
 }
 
 static NTSTATUS DsFilterLoad(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath) {
-    DSR_INIT(APC_LEVEL);
+    DSR_ENTER(APC_LEVEL);
     DSR_ASSERT(FltRegisterFilter(DriverObject, &FilterRegistration, &Filter));
     DSR_ASSERT(FltStartFiltering(Filter));
-    DSR_CLEANUP {
-        DSR_LOG_UNEXPECTED_ERROR();
+    DSR_ERROR_HANDLER({
         if (Filter != NULL)
             FltUnregisterFilter(Filter);
-    }
+    });
     return DSR_STATUS;
 }
 
 static NTSTATUS DsFilterUnload(FLT_FILTER_UNLOAD_FLAGS Flags) {
-    DSR_INIT(PASSIVE_LEVEL);
+    DSR_ENTER(PASSIVE_LEVEL);
     FltUnregisterFilter(Filter);
     return DSR_STATUS;
 }
@@ -103,46 +103,43 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
     DEVICE_TYPE VolumeDeviceType,
     FLT_FILESYSTEM_TYPE VolumeFilesystemType
 ) {
-    DSR_INIT(PASSIVE_LEVEL);
-    DsLogTrace(
-        "Trying to setup an instance. DE: 0x%08X, FS: 0x%08X, FL: 0x%08X.",
-        VolumeDeviceType, VolumeFilesystemType, Flags
-    );
-    if (VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
-        return STATUS_FLT_DO_NOT_ATTACH;
-    if (VolumeFilesystemType == FLT_FSTYPE_RAW)
-        return STATUS_FLT_DO_NOT_ATTACH;
-
+    DSR_ENTER(PASSIVE_LEVEL);
     PDS_INSTANCE_CONTEXT context = NO_CONTEXT;
 
-#ifdef ATTACH_VOLUME
+#ifdef DBG
+    UNICODE_STRING voulmeName = EmptyUnicodeString;
+    DsInitUnicodeString(&voulmeName);
+    DSR_ASSERT(DsGetVolumeName(FltObjects->Volume, &voulmeName));
+    DsLogTrace(
+        "Trying to setup an instance. [%wZ; 0x%X 0x%X 0x%X]",
+        &voulmeName, VolumeDeviceType, VolumeFilesystemType, Flags
+    );
+    DsFreeUnicodeString(&voulmeName);
+#endif
+
+    if (VolumeDeviceType != FILE_DEVICE_DISK_FILE_SYSTEM)
+        DSR_RETURN(STATUS_FLT_DO_NOT_ATTACH);
+    if (VolumeFilesystemType == FLT_FSTYPE_RAW)
+        DSR_RETURN(STATUS_FLT_DO_NOT_ATTACH);
+
+#if defined(DBG) && defined(ATTACH_VOLUME)
     DECLARE_CONST_UNICODE_STRING(AttachVolume, ATTACH_VOLUME);
-    UNICODE_STRING guid = EmptyUnicodeString;
-    DsInitUnicodeString(&guid);
-    DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &guid));
-    BOOLEAN attach = RtlCompareUnicodeString(&guid, &AttachVolume, FALSE) == 0;
-    DsFreeUnicodeString(&guid);
+    UNICODE_STRING volumeGuid = EmptyUnicodeString;
+    DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &volumeGuid));
+    BOOLEAN attach = RtlCompareUnicodeString(&volumeGuid, &AttachVolume, FALSE) == 0;
+    DsFreeUnicodeString(&volumeGuid);
     if (!attach)
-        return STATUS_FLT_DO_NOT_ATTACH;
+        DSR_RETURN(STATUS_FLT_DO_NOT_ATTACH);
 #endif
 
     DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
     DSR_ASSERT(DsInitInstanceContext(FltObjects, context));
     DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
 
-    DsLogInfo(
-        "Instance context created.\n"
-        "  - Volume: %wZ\n"
-        "  - File system: %d\n"
-        "  - File system attributes: 0x%08X\n"
-        "  - Sector size: %d\n",
-        &context->VolumeGuid,
-        context->FileSystemProperties.Type,
-        context->FileSystemProperties.Attributes,
-        context->VolumeProperties.SectorSize
-    );
+    DsLogInfo("Instance context created: 0x%p.", context);
 
-    DSR_CLEANUP { }
+    DSR_ERROR_HANDLER({});
+
     FltReleaseContextSafe(context);
     return DSR_STATUS;
 }

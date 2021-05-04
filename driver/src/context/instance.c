@@ -17,6 +17,7 @@
  */
 
 #include <context.h>
+#include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitInstanceContext)
@@ -24,14 +25,14 @@
 #endif
 
 NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT Context) {
-    DSR_INIT(PASSIVE_LEVEL);
+    DSR_ENTER(PASSIVE_LEVEL);
     DsInitUnicodeString(&Context->VolumeGuid);
     DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &Context->VolumeGuid));
     DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &Context->VolumeProperties));
     DSR_ASSERT(DsGetFileSystemProperties(FltObjects->Instance, &Context->FileSystemProperties));
-    DSR_CLEANUP {
+    DSR_ERROR_HANDLER({
         DsFreeInstanceContext(Context);
-    }
+    });
     return DSR_STATUS;
 }
 
