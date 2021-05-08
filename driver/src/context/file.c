@@ -20,15 +20,18 @@
 #include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsInitFileContext)
-#pragma alloc_text(PAGE, DsFreeFileContext)
+#pragma alloc_text(PAGE, DsInitializeFileContext)
+#pragma alloc_text(PAGE, DsFinalizeFileContext)
 #endif
 
-NTSTATUS DsInitFileContext(_Inout_ PDS_FILE_CONTEXT FileContext) {
+NTSTATUS DsInitializeFileContext(_In_opt_ PVOID Parameters, _Out_ PDS_FILE_CONTEXT Context) {
     DSR_ENTER(APC_LEVEL);
+    RtlZeroMemory(Context, sizeof(DS_FILE_CONTEXT));
+    FltInitializePushLock(&Context->Lock);
     DSR_ERROR_HANDLER({});
     return DSR_STATUS;
 }
 
-VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT FileContext) {
+VOID DsFinalizeFileContext(_Inout_ PDS_FILE_CONTEXT Context) {
+    FltDeletePushLock(&Context->Lock);
 }

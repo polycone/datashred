@@ -29,8 +29,8 @@
 #pragma warning(disable:4702) // Unreacheable code
 #endif
 
-//#pragma warning(disable:4214) // Custom bit fields type
-//#pragma warning(disable:4201) // Nameless structs/unions
+#pragma warning(disable:4214) // Bit field types other than int
+#pragma warning(disable:4201) // Nameless structs/unions
 
 /* Empty aliases */
 #define NO_FLAGS                                    0
@@ -54,9 +54,12 @@
 #endif // DBG
 
 #define FltReleaseContextSafe(ctx)                  \
-    if (ctx != NO_CONTEXT) {                        \
-        FltReleaseContext(ctx);                     \
-    }
+    if (ctx != NO_CONTEXT)                          \
+        FltReleaseContext(ctx);
+
+#define FltObjectDereferenceSafe(obj)               \
+    if (obj != NULL)                                \
+        FltObjectDereference(obj);                  \
 
 /* Status codes macros */
 #define BUILD_NTSTATUS(severity, facility, code) ((NTSTATUS)((severity << 30) | 0x20000000 | (facility << 16) | code))
@@ -91,8 +94,9 @@ NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Na
 NTSTATUS DsGetVolumeName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
 NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Out_ PDS_VOLUME_PROPERTIES VolumeProperties);
 NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Out_ PDS_FILESYSTEM_PROPERTIES Properties);
-NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, USHORT Length);
-VOID DsFreeUnicodeString(_In_ PUNICODE_STRING String);
+NTSTATUS DsAllocateUnicodeString(_Out_ PUNICODE_STRING String, USHORT Length);
+VOID DsFreeUnicodeString(_Inout_ PUNICODE_STRING String);
+NTSTATUS DsCopyUnicodeString(_Inout_ PUNICODE_STRING Destination, _In_ PUNICODE_STRING Source);
 NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer);
 VOID DsMemFree(_In_ PVOID Pointer);
 BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName);
@@ -102,4 +106,4 @@ BOOLEAN DsIsDefaultStream(_In_ PUNICODE_STRING StreamName);
     DsMemAlloc(sizeof(type), pointer)
 #define EmptyUnicodeString { 0, 0, NULL }
 #define DsInitUnicodeString(string)                 \
-    DsCreateUnicodeString(string, 0)
+    DsAllocateUnicodeString(string, 0)

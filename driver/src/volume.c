@@ -34,9 +34,6 @@ static NTSTATUS DsGetVoulmeNameBy(_In_ PDS_GET_VOLUME_NAME Getter, _In_ PFLT_VOL
 #pragma alloc_text(PAGE, DsGetFileSystemProperties)
 #endif
 
-#pragma warning(push)
-#pragma warning(disable:4242 4244) // Possible data loss within conversion
-
 NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
     return DsGetVoulmeNameBy(FltGetVolumeGuidName, Volume, Name);
 }
@@ -45,13 +42,16 @@ NTSTATUS DsGetVolumeName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) 
     return DsGetVoulmeNameBy(FltGetVolumeName, Volume, Name);
 }
 
+#pragma warning(push)
+#pragma warning(disable:4242 4244) // Possible data loss within conversion
+
 static NTSTATUS DsGetVoulmeNameBy(_In_ PDS_GET_VOLUME_NAME Getter, _In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
     DSR_ENTER(PASSIVE_LEVEL);
     ULONG bufferLength = 0;
     DSR_ASSERT(Getter(Volume, NULL, &bufferLength), DSR_SUPPRESS(STATUS_BUFFER_TOO_SMALL));
     if (Name->MaximumLength < bufferLength) {
         DsFreeUnicodeString(Name);
-        DSR_ASSERT(DsCreateUnicodeString(Name, bufferLength));
+        DSR_ASSERT(DsAllocateUnicodeString(Name, bufferLength));
     }
     DSR_ASSERT(Getter(Volume, Name, &bufferLength));
     DSR_ERROR_HANDLER({

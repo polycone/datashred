@@ -20,11 +20,12 @@
 #include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsCreateUnicodeString)
+#pragma alloc_text(PAGE, DsAllocateUnicodeString)
 #pragma alloc_text(PAGE, DsFreeUnicodeString)
+#pragma alloc_text(PAGE, DsCopyUnicodeString)
 #endif
 
-NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, USHORT Length) {
+NTSTATUS DsAllocateUnicodeString(_Out_ PUNICODE_STRING String, USHORT Length) {
     DSR_ENTER(APC_LEVEL);
     PVOID buffer = NULL;
     if (Length > 0) {
@@ -37,11 +38,23 @@ NTSTATUS DsCreateUnicodeString(_Inout_ PUNICODE_STRING String, USHORT Length) {
     return DSR_STATUS;
 }
 
-VOID DsFreeUnicodeString(_In_ PUNICODE_STRING String) {
+VOID DsFreeUnicodeString(_Inout_ PUNICODE_STRING String) {
     if (String->Buffer != NULL) {
         DsMemFree(String->Buffer);
     }
     String->Buffer = NULL;
     String->MaximumLength = 0;
     String->Length = 0;
+}
+
+NTSTATUS DsCopyUnicodeString(_Inout_ PUNICODE_STRING Destination, _In_ PUNICODE_STRING Source) {
+    DSR_ENTER(APC_LEVEL);
+    if (Destination->MaximumLength < Source->Length) {
+        DsFreeUnicodeString(Destination);
+        DSR_ASSERT(DsAllocateUnicodeString(Destination, Source->Length));
+    }
+    RtlCopyMemory(Destination->Buffer, Source->Buffer, Source->Length);
+    Destination->Length = Source->Length;
+    DSR_ERROR_HANDLER({});
+    return DSR_STATUS;
 }

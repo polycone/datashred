@@ -25,19 +25,49 @@ typedef struct _DS_INSTANCE_CONTEXT {
     DS_FILESYSTEM_PROPERTIES FileSystemProperties;
 } DS_INSTANCE_CONTEXT, *PDS_INSTANCE_CONTEXT;
 
+#ifdef _WIN64
+#define PUSH_LOCK_ALIGN __declspec(align(8))
+#else
+#define PUSH_LOCK_ALIGN __declspec(align(4))
+#endif // _WIN64
+
+typedef struct _DS_FILE_STATE {
+    LONG HandleCount;
+    union {
+        struct {
+            UINT8 Locked : 1;
+        };
+        ULONG Flags;
+    };
+} DS_FILE_STATE, *PDS_FILE_STATE;
+
 typedef struct _DS_FILE_CONTEXT {
-    void *nothing;
+    PUSH_LOCK_ALIGN EX_PUSH_LOCK Lock;
+    DS_FILE_STATE State;
 } DS_FILE_CONTEXT, *PDS_FILE_CONTEXT;
 
 typedef struct _DS_STREAM_CONTEXT {
-    void *nothing;
+    PDS_FILE_CONTEXT FileContext;
+    struct {
+        UINT8 Default : 1;
+    };
+    DS_FILE_STATE State;
+
+#ifdef DBG
+    UNICODE_STRING Name;
+#endif
 } DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
 
-NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT Context);
-VOID DsFreeInstanceContext(_In_ PDS_INSTANCE_CONTEXT Context);
+typedef struct _DS_STREAM_CTX_INIT_DATA {
+    PDS_FILE_CONTEXT FileContext;
+    PFLT_FILE_NAME_INFORMATION FileNameInfo;
+} DS_STREAM_CTX_INIT_DATA, *PDS_STREAM_CTX_INIT_DATA;
 
-NTSTATUS DsInitFileContext(_Inout_ PDS_FILE_CONTEXT FileContext);
-VOID DsFreeFileContext(_In_ PDS_FILE_CONTEXT FileContext);
+NTSTATUS DsInitializeInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Out_ PDS_INSTANCE_CONTEXT Context);
+VOID DsFinalizeInstanceContext(_Inout_ PDS_INSTANCE_CONTEXT Context);
 
-NTSTATUS DsInitStreamContext(_Inout_ PDS_STREAM_CONTEXT StreamContext);
-VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT Context);
+NTSTATUS DsInitializeFileContext(_In_opt_ PVOID Parameters, _Out_ PDS_FILE_CONTEXT Context);
+VOID DsFinalizeFileContext(_Inout_ PDS_FILE_CONTEXT Context);
+
+NTSTATUS DsInitializeStreamContext(_In_ PDS_STREAM_CTX_INIT_DATA Data, _Out_ PDS_STREAM_CONTEXT Context);
+VOID DsFinalizeStreamContext(_Inout_ PDS_STREAM_CONTEXT Context);

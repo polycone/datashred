@@ -20,15 +20,29 @@
 #include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsInitStreamContext)
-#pragma alloc_text(PAGE, DsFreeStreamContext)
+#pragma alloc_text(PAGE, DsInitializeStreamContext)
+#pragma alloc_text(PAGE, DsFinalizeStreamContext)
 #endif
 
-NTSTATUS DsInitStreamContext(_Inout_ PDS_STREAM_CONTEXT StreamContext) {
+NTSTATUS DsInitializeStreamContext(_In_ PDS_STREAM_CTX_INIT_DATA Data, _Out_ PDS_STREAM_CONTEXT Context) {
     DSR_ENTER(APC_LEVEL);
-    DSR_ERROR_HANDLER({});
+    RtlZeroMemory(Context, sizeof(DS_STREAM_CONTEXT));
+    FltReferenceContext(Data->FileContext);
+    Context->FileContext = Data->FileContext;
+    Context->Default = DsIsDefaultStream(&Data->FileNameInfo->Stream);
+#ifdef DBG
+    DSR_ASSERT(DsCopyUnicodeString(&Context->Name, &Data->FileNameInfo->Name));
+    DsLogTrace("Stream context initialized. [%wZ]", &Context->Name);
+#endif
+    DSR_ERROR_HANDLER({
+        FltReleaseContextSafe(Data->FileContext);
+    });
     return DSR_STATUS;
 }
 
-VOID DsFreeStreamContext(_In_ PDS_STREAM_CONTEXT StreamContext) {
+VOID DsFinalizeStreamContext(_Inout_ PDS_STREAM_CONTEXT Context) {
+    FltReleaseContext(Context->FileContext);
+#ifdef DBG
+    DsFreeUnicodeString(&Context->Name);
+#endif
 }

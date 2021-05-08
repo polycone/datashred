@@ -20,22 +20,22 @@
 #include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsInitInstanceContext)
-#pragma alloc_text(PAGE, DsFreeInstanceContext)
+#pragma alloc_text(PAGE, DsInitializeInstanceContext)
+#pragma alloc_text(PAGE, DsFinalizeInstanceContext)
 #endif
 
-NTSTATUS DsInitInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Inout_ PDS_INSTANCE_CONTEXT Context) {
+NTSTATUS DsInitializeInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Out_ PDS_INSTANCE_CONTEXT Context) {
     DSR_ENTER(PASSIVE_LEVEL);
     DsInitUnicodeString(&Context->VolumeGuid);
     DSR_ASSERT(DsGetVolumeGuidName(FltObjects->Volume, &Context->VolumeGuid));
     DSR_ASSERT(DsGetVolumeProperties(FltObjects->Volume, &Context->VolumeProperties));
     DSR_ASSERT(DsGetFileSystemProperties(FltObjects->Instance, &Context->FileSystemProperties));
     DSR_ERROR_HANDLER({
-        DsFreeInstanceContext(Context);
+        DsFinalizeInstanceContext(Context);
     });
     return DSR_STATUS;
 }
 
-VOID DsFreeInstanceContext(_In_ PDS_INSTANCE_CONTEXT Context) {
+VOID DsFinalizeInstanceContext(_Inout_ PDS_INSTANCE_CONTEXT Context) {
     DsFreeUnicodeString(&Context->VolumeGuid);
 }
