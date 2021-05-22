@@ -19,6 +19,7 @@
 #pragma once
 #include <fltKernel.h>
 #include <dontuse.h>
+#include "status.h"
 
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
@@ -61,13 +62,6 @@
     if (obj != NULL)                                \
         FltObjectDereference(obj);                  \
 
-/* Status codes macros */
-#define BUILD_NTSTATUS(severity, facility, code) ((NTSTATUS)((severity << 30) | 0x20000000 | (facility << 16) | code))
-
-// Filter facility
-#define STATUS_FILE_CONTEXT_NOT_SUPPORTED           BUILD_NTSTATUS(STATUS_SEVERITY_ERROR, 0x001, 0x0001)
-#define STATUS_STREAM_CONTEXT_NOT_SUPPORTED         BUILD_NTSTATUS(STATUS_SEVERITY_ERROR, 0x001, 0x0002)
-
 /* Filter functions shortcuts */
 #define DsQueryStandardInformationFile(objs, info)  \
     FltQueryInformationFile(                        \
@@ -78,32 +72,3 @@
         FileStandardInformation,                    \
         NULL                                        \
     )
-
-/* Util */
-
-typedef struct _DS_VOLUME_PROPERTIES {
-    USHORT SectorSize;
-} DS_VOLUME_PROPERTIES, *PDS_VOLUME_PROPERTIES;
-
-typedef struct _DS_FILESYSTEM_PROPERTIES {
-    FLT_FILESYSTEM_TYPE Type;
-    ULONG Attributes;
-} DS_FILESYSTEM_PROPERTIES, *PDS_FILESYSTEM_PROPERTIES;
-
-NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
-NTSTATUS DsGetVolumeName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
-NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Out_ PDS_VOLUME_PROPERTIES VolumeProperties);
-NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Out_ PDS_FILESYSTEM_PROPERTIES Properties);
-NTSTATUS DsAllocateUnicodeString(_Out_ PUNICODE_STRING String, USHORT Length);
-VOID DsFreeUnicodeString(_Inout_ PUNICODE_STRING String);
-NTSTATUS DsCopyUnicodeString(_Inout_ PUNICODE_STRING Destination, _In_ PUNICODE_STRING Source);
-NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer);
-VOID DsMemFree(_In_ PVOID Pointer);
-BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName);
-BOOLEAN DsIsDefaultStream(_In_ PUNICODE_STRING StreamName);
-
-#define DsMemAllocType(type, pointer)               \
-    DsMemAlloc(sizeof(type), pointer)
-#define EmptyUnicodeString { 0, 0, NULL }
-#define DsInitUnicodeString(string)                 \
-    DsAllocateUnicodeString(string, 0)

@@ -16,25 +16,19 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma once
 #include "driver.h"
-#include "memory.h"
 
-#ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsMemAlloc)
-#pragma alloc_text(PAGE, DsMemFree)
-#endif
+typedef struct _DS_VOLUME_PROPERTIES {
+    USHORT SectorSize;
+} DS_VOLUME_PROPERTIES, *PDS_VOLUME_PROPERTIES;
 
-NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DS_DEFAULT_POOL_TAG);
-    if (pointer == NULL) {
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-    *Pointer = pointer;
-    return STATUS_SUCCESS;
-}
+typedef struct _DS_FILESYSTEM_PROPERTIES {
+    FLT_FILESYSTEM_TYPE Type;
+    ULONG Attributes;
+} DS_FILESYSTEM_PROPERTIES, *PDS_FILESYSTEM_PROPERTIES;
 
-VOID DsMemFree(_In_ PVOID Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    ExFreePoolWithTag(Pointer, DS_DEFAULT_POOL_TAG);
-}
+NTSTATUS DsGetVolumeGuidName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
+NTSTATUS DsGetVolumeName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
+NTSTATUS DsGetVolumeProperties(_In_ PFLT_VOLUME Volume, _Out_ PDS_VOLUME_PROPERTIES VolumeProperties);
+NTSTATUS DsGetFileSystemProperties(_In_ PFLT_INSTANCE Instance, _Out_ PDS_FILESYSTEM_PROPERTIES Properties);

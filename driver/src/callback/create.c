@@ -19,6 +19,7 @@
 #include <callback.h>
 #include <context.h>
 #include <dsr.h>
+#include <file.h>
 
 typedef NTSTATUS
 (FLTAPI *FLT_GET_CONTEXT) (

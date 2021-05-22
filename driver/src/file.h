@@ -16,25 +16,8 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "driver.h"
-#include "memory.h"
+#pragma once
+#include <ntdef.h>
 
-#ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsMemAlloc)
-#pragma alloc_text(PAGE, DsMemFree)
-#endif
-
-NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DS_DEFAULT_POOL_TAG);
-    if (pointer == NULL) {
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-    *Pointer = pointer;
-    return STATUS_SUCCESS;
-}
-
-VOID DsMemFree(_In_ PVOID Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    ExFreePoolWithTag(Pointer, DS_DEFAULT_POOL_TAG);
-}
+BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName);
+BOOLEAN DsIsMainStream(_In_ PUNICODE_STRING StreamName);

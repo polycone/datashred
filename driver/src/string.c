@@ -16,8 +16,10 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <driver.h>
-#include <dsr.h>
+#include "driver.h"
+#include "dsr.h"
+#include "memory.h"
+#include "string.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsAllocateUnicodeString)

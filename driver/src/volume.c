@@ -16,16 +16,17 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <driver.h>
-#include <dsr.h>
+#include "driver.h"
+#include "dsr.h"
+#include "volume.h"
 
 typedef NTSTATUS
-(FLTAPI *PDS_GET_VOLUME_NAME) (
+(FLTAPI *PDS_GET_VOLUME_NAME_ROUTINE) (
     _In_ PFLT_VOLUME Volume,
     _Inout_opt_ PUNICODE_STRING VolumeName,
     _Out_opt_ PULONG BufferSizeNeeded
 );
-static NTSTATUS DsGetVoulmeNameBy(_In_ PDS_GET_VOLUME_NAME Getter, _In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
+static NTSTATUS DsGetVoulmeNameBy(_In_ PDS_GET_VOLUME_NAME_ROUTINE Getter, _In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsGetVolumeGuidName)
@@ -45,7 +46,7 @@ NTSTATUS DsGetVolumeName(_In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) 
 #pragma warning(push)
 #pragma warning(disable:4242 4244) // Possible data loss within conversion
 
-static NTSTATUS DsGetVoulmeNameBy(_In_ PDS_GET_VOLUME_NAME Getter, _In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
+static NTSTATUS DsGetVoulmeNameBy(_In_ PDS_GET_VOLUME_NAME_ROUTINE Getter, _In_ PFLT_VOLUME Volume, _Inout_ PUNICODE_STRING Name) {
     DSR_ENTER(PASSIVE_LEVEL);
     ULONG bufferLength = 0;
     DSR_ASSERT(Getter(Volume, NULL, &bufferLength), DSR_SUPPRESS(STATUS_BUFFER_TOO_SMALL));

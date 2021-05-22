@@ -17,7 +17,7 @@
  */
 
 #pragma once
-#include <driver.h>
+#include "driver.h"
 
 FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCreateCallback(
     _Inout_ PFLT_CALLBACK_DATA Data,

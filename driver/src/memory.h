@@ -16,25 +16,18 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "driver.h"
-#include "memory.h"
+#pragma once
+#include <ntdef.h>
+#include <sal.h>
 
-#ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsMemAlloc)
-#pragma alloc_text(PAGE, DsMemFree)
-#endif
+#define TO_POINTER(address)                         (PVOID)(address)
+#define TO_ADDRESS(pointer)                         (SIZE_T)(pointer)
+#define POINTER_AT_OFFSET(pointer, offset)          TO_POINTER(TO_ADDRESS(pointer) + (offset))
 
-NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DS_DEFAULT_POOL_TAG);
-    if (pointer == NULL) {
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-    *Pointer = pointer;
-    return STATUS_SUCCESS;
-}
+NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer);
+VOID DsMemFree(_In_ PVOID Pointer);
 
-VOID DsMemFree(_In_ PVOID Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    ExFreePoolWithTag(Pointer, DS_DEFAULT_POOL_TAG);
-}
+#define DsMemAllocType(type, pointer)               DsMemAlloc(sizeof(type), pointer)
+#define DsMemFreeSafe(pointer)                      \
+    if (pointer != NULL)                            \
+        DsMemFree(pointer);

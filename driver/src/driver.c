@@ -16,10 +16,10 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <driver.h>
-#include <dsr.h>
-#include <context.h>
-#include <callback.h>
+#include "driver.h"
+#include "dsr.h"
+#include "context.h"
+#include "callback.h"
 
 static PFLT_FILTER Filter = NULL;
 

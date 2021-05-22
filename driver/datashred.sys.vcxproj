@@ -101,7 +101,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{1c6a702d-d865-4672-8565-16d819d6778a}";RAISE_ASSERTION_FAILURE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{f4d0d937-5fc3-4d9c-9449-dac4f418051d}";RAISE_ASSERTION_FAILURE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -121,7 +121,7 @@
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{1c6a702d-d865-4672-8565-16d819d6778a}";RAISE_ASSERTION_FAILURE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRIVER_NAME="$(TargetName).sys";ATTACH_VOLUME=L"\\??\\Volume{f4d0d937-5fc3-4d9c-9449-dac4f418051d}";RAISE_ASSERTION_FAILURE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -156,6 +156,11 @@
     <ClInclude Include="src\context.h" />
     <ClInclude Include="src\driver.h" />
     <ClInclude Include="src\dsr.h" />
+    <ClInclude Include="src\file.h" />
+    <ClInclude Include="src\memory.h" />
+    <ClInclude Include="src\status.h" />
+    <ClInclude Include="src\string.h" />
+    <ClInclude Include="src\volume.h" />
   </ItemGroup>
   <ItemGroup>
     <Inf Include="datashred.inf" />

@@ -16,13 +16,14 @@
  * along with Datashred. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <driver.h>
+#include "driver.h"
+#include "file.h"
 
 static DECLARE_CONST_UNICODE_STRING(DataStreamTypeName, L"$DATA");
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsIsDataStream)
-#pragma alloc_text(PAGE, DsIsDefaultStream)
+#pragma alloc_text(PAGE, DsIsMainStream)
 #endif
 
 BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName) {
@@ -42,7 +43,7 @@ BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName) {
     return RtlCompareUnicodeString(&typeName, &DataStreamTypeName, TRUE) == 0;
 }
 
-BOOLEAN DsIsDefaultStream(_In_ PUNICODE_STRING StreamName) {
+BOOLEAN DsIsMainStream(_In_ PUNICODE_STRING StreamName) {
     if (StreamName->Length == 0)
         return TRUE;
     BOOLEAN doubleDot = StreamName->Length >= 2 && StreamName->Buffer[0] == L':' && StreamName->Buffer[1] == L':';

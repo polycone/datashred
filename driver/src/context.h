@@ -17,7 +17,8 @@
  */
 
 #pragma once
-#include <driver.h>
+#include "driver.h"
+#include "volume.h"
 
 typedef struct _DS_INSTANCE_CONTEXT {
     UNICODE_STRING VolumeGuid;
@@ -49,7 +50,7 @@ typedef struct _DS_FILE_CONTEXT {
 typedef struct _DS_STREAM_CONTEXT {
     PDS_FILE_CONTEXT FileContext;
     struct {
-        UINT8 Default : 1;
+        UINT8 Main : 1;
     };
     DS_FILE_STATE State;
 

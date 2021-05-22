@@ -18,6 +18,7 @@
 
 #include <context.h>
 #include <dsr.h>
+#include <file.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsInitializeStreamContext)
@@ -29,7 +30,7 @@ NTSTATUS DsInitializeStreamContext(_In_ PDS_STREAM_CTX_INIT_DATA Data, _Out_ PDS
     RtlZeroMemory(Context, sizeof(DS_STREAM_CONTEXT));
     FltReferenceContext(Data->FileContext);
     Context->FileContext = Data->FileContext;
-    Context->Default = DsIsDefaultStream(&Data->FileNameInfo->Stream);
+    Context->Main = DsIsMainStream(&Data->FileNameInfo->Stream);
 #ifdef DBG
     DSR_ASSERT(DsCopyUnicodeString(&Context->Name, &Data->FileNameInfo->Name));
     DsLogTrace("Stream context initialized. [%wZ]", &Context->Name);
