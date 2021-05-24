@@ -21,27 +21,39 @@
 #include <file.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsInitializeStreamContext)
-#pragma alloc_text(PAGE, DsFinalizeStreamContext)
+#pragma alloc_text(PAGE, DsCreateStreamContext)
+#pragma alloc_text(PAGE, DsCleanupStreamContext)
 #endif
 
-NTSTATUS DsInitializeStreamContext(_In_ PDS_STREAM_CTX_INIT_DATA Data, _Out_ PDS_STREAM_CONTEXT Context) {
+NTSTATUS DsCreateStreamContext(
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _In_ PDS_FILE_CONTEXT FileContext,
+    _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation,
+    _Outptr_ PDS_STREAM_CONTEXT *Context
+) {
     DSR_ENTER(APC_LEVEL);
-    RtlZeroMemory(Context, sizeof(DS_STREAM_CONTEXT));
-    FltReferenceContext(Data->FileContext);
-    Context->FileContext = Data->FileContext;
-    Context->Main = DsIsMainStream(&Data->FileNameInfo->Stream);
+    PDS_STREAM_CONTEXT context = NO_CONTEXT;
+    DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_STREAM_CONTEXT, sizeof(DS_STREAM_CONTEXT), PagedPool, &context));
+
+    RtlZeroMemory(context, sizeof(DS_STREAM_CONTEXT));
+    FltReferenceContext(FileContext);
+    context->FileContext = FileContext;
+    context->Main = DsIsMainStream(&FileNameInformation->Stream);
+
 #ifdef DBG
-    DSR_ASSERT(DsCopyUnicodeString(&Context->Name, &Data->FileNameInfo->Name));
-    DsLogTrace("Stream context initialized. [%wZ]", &Context->Name);
+    DSR_ASSERT(DsCopyUnicodeString(&context->Name, &FileNameInformation->Name));
+    DsLogTrace("Stream context created. [%wZ]", &context->Name);
 #endif
+
+    *Context = context;
     DSR_ERROR_HANDLER({
-        FltReleaseContextSafe(Data->FileContext);
+        FltReleaseContextSafe(FileContext);
+        FltReleaseContextSafe(context);
     });
     return DSR_STATUS;
 }
 
-VOID DsFinalizeStreamContext(_Inout_ PDS_STREAM_CONTEXT Context) {
+VOID DsCleanupStreamContext(_Inout_ PDS_STREAM_CONTEXT Context) {
     FltReleaseContext(Context->FileContext);
 #ifdef DBG
     DsFreeUnicodeString(&Context->Name);

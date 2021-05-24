@@ -54,6 +54,15 @@
 #define DsLogTrace  NOP_FUNCTION
 #endif // DBG
 
+/* Inline initializtion helpers */
+#define INLINE_TYPE(type, ...)                      (type) { __VA_ARGS__ }
+
+#ifdef DBG
+#define DEBUG_ONLY(statement)                       statement
+#else
+#define DEBUG_ONLY(statement)                       NOP_FUNCTION
+#endif
+
 #define FltReleaseContextSafe(ctx)                  \
     if (ctx != NO_CONTEXT)                          \
         FltReleaseContext(ctx);

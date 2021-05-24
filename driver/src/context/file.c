@@ -20,18 +20,28 @@
 #include <dsr.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsInitializeFileContext)
-#pragma alloc_text(PAGE, DsFinalizeFileContext)
+#pragma alloc_text(PAGE, DsCreateFileContext)
+#pragma alloc_text(PAGE, DsCleanupFileContext)
 #endif
 
-NTSTATUS DsInitializeFileContext(_In_opt_ PVOID Parameters, _Out_ PDS_FILE_CONTEXT Context) {
+NTSTATUS DsCreateFileContext(
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _Outptr_ PDS_FILE_CONTEXT *Context
+) {
     DSR_ENTER(APC_LEVEL);
-    RtlZeroMemory(Context, sizeof(DS_FILE_CONTEXT));
-    FltInitializePushLock(&Context->Lock);
-    DSR_ERROR_HANDLER({});
+    PDS_FILE_CONTEXT context = NO_CONTEXT;
+    DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_FILE_CONTEXT, sizeof(DS_FILE_CONTEXT), PagedPool, &context));
+
+    RtlZeroMemory(context, sizeof(DS_FILE_CONTEXT));
+    FltInitializePushLock(&context->Lock);
+
+    *Context = context;
+    DSR_ERROR_HANDLER({
+        FltReleaseContextSafe(context);
+    });
     return DSR_STATUS;
 }
 
-VOID DsFinalizeFileContext(_Inout_ PDS_FILE_CONTEXT Context) {
+VOID DsCleanupFileContext(_Inout_ PDS_FILE_CONTEXT Context) {
     FltDeletePushLock(&Context->Lock);
 }

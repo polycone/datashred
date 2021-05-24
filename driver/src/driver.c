@@ -17,9 +17,9 @@
  */
 
 #include "driver.h"
-#include "dsr.h"
-#include "context.h"
 #include "callback.h"
+#include "context.h"
+#include "dsr.h"
 
 static PFLT_FILTER Filter = NULL;
 
@@ -131,11 +131,8 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
         DSR_RETURN(STATUS_FLT_DO_NOT_ATTACH);
 #endif
 
-    DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_INSTANCE_CONTEXT, sizeof(DS_INSTANCE_CONTEXT), PagedPool, &context));
-    DSR_ASSERT(DsInitializeInstanceContext(FltObjects, context));
+    DSR_ASSERT(DsCreateInstanceContext(FltObjects, &context));
     DSR_ASSERT(FltSetInstanceContext(FltObjects->Instance, FLT_SET_CONTEXT_KEEP_IF_EXISTS, context, NULL));
-
-    DsLogInfo("Instance context created. [0x%p]", context);
 
     DSR_ERROR_HANDLER({});
 
@@ -146,13 +143,13 @@ static NTSTATUS FLTAPI DsInstanceSetupCallback(
 static VOID FLTAPI DsInstanceContextCleanupCallback(_In_ PFLT_CONTEXT Context, FLT_CONTEXT_TYPE ContextType) {
     PDS_INSTANCE_CONTEXT context = (PDS_INSTANCE_CONTEXT)Context;
     DsLogTrace("Instance context cleanup. [%wZ]", &context->VolumeGuid);
-    DsFinalizeInstanceContext(context);
+    DsCleanupInstanceContext(context);
 }
 
 static VOID FLTAPI DsFileContextCleanupCallback(_In_ PFLT_CONTEXT Context, FLT_CONTEXT_TYPE ContextType) {
     PDS_FILE_CONTEXT context = (PDS_FILE_CONTEXT)Context;
     DsLogTrace("File context cleanup. [0x%p]", context);
-    DsFinalizeFileContext(context);
+    DsCleanupFileContext(context);
 }
 
 static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, FLT_CONTEXT_TYPE ContextType) {
@@ -160,5 +157,5 @@ static VOID FLTAPI DsStreamContextCleanupCallback(_In_ PFLT_CONTEXT Context, FLT
 #ifdef DBG
     DsLogTrace("Stream context cleanup. [0x%p; %wZ]", context, &context->Name);
 #endif
-    DsFinalizeStreamContext(context);
+    DsCleanupStreamContext(context);
 }

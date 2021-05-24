@@ -59,16 +59,17 @@ typedef struct _DS_STREAM_CONTEXT {
 #endif
 } DS_STREAM_CONTEXT, *PDS_STREAM_CONTEXT;
 
-typedef struct _DS_STREAM_CTX_INIT_DATA {
-    PDS_FILE_CONTEXT FileContext;
-    PFLT_FILE_NAME_INFORMATION FileNameInfo;
-} DS_STREAM_CTX_INIT_DATA, *PDS_STREAM_CTX_INIT_DATA;
+NTSTATUS DsCreateInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Out_ PDS_INSTANCE_CONTEXT *Context);
+VOID DsCleanupInstanceContext(_Inout_ PDS_INSTANCE_CONTEXT Context);
 
-NTSTATUS DsInitializeInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Out_ PDS_INSTANCE_CONTEXT Context);
-VOID DsFinalizeInstanceContext(_Inout_ PDS_INSTANCE_CONTEXT Context);
+NTSTATUS DsCreateFileContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Outptr_ PDS_FILE_CONTEXT *Context);
+VOID DsCleanupFileContext(_Inout_ PDS_FILE_CONTEXT Context);
 
-NTSTATUS DsInitializeFileContext(_In_opt_ PVOID Parameters, _Out_ PDS_FILE_CONTEXT Context);
-VOID DsFinalizeFileContext(_Inout_ PDS_FILE_CONTEXT Context);
+NTSTATUS DsCreateStreamContext(
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _In_ PDS_FILE_CONTEXT FileContext,
+    _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation,
+    _Outptr_ PDS_STREAM_CONTEXT *Context
+);
 
-NTSTATUS DsInitializeStreamContext(_In_ PDS_STREAM_CTX_INIT_DATA Data, _Out_ PDS_STREAM_CONTEXT Context);
-VOID DsFinalizeStreamContext(_Inout_ PDS_STREAM_CONTEXT Context);
+VOID DsCleanupStreamContext(_Inout_ PDS_STREAM_CONTEXT Context);

@@ -153,6 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\callback.h" />
+    <ClInclude Include="src\callback\create.h" />
     <ClInclude Include="src\context.h" />
     <ClInclude Include="src\driver.h" />
     <ClInclude Include="src\dsr.h" />
