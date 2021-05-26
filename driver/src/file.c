@@ -23,7 +23,7 @@ static DECLARE_CONST_UNICODE_STRING(DataStreamTypeName, L"$DATA");
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsIsDataStream)
-#pragma alloc_text(PAGE, DsIsMainStream)
+#pragma alloc_text(PAGE, DsIsAlternateStream)
 #endif
 
 BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName) {
@@ -43,9 +43,9 @@ BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName) {
     return RtlCompareUnicodeString(&typeName, &DataStreamTypeName, TRUE) == 0;
 }
 
-BOOLEAN DsIsMainStream(_In_ PUNICODE_STRING StreamName) {
+BOOLEAN DsIsAlternateStream(_In_ PUNICODE_STRING StreamName) {
     if (StreamName->Length == 0)
-        return TRUE;
-    BOOLEAN doubleDot = StreamName->Length >= 2 && StreamName->Buffer[0] == L':' && StreamName->Buffer[1] == L':';
-    return doubleDot;
+        return FALSE;
+    BOOLEAN doubleColon = StreamName->Length >= 2 && StreamName->Buffer[0] == L':' && StreamName->Buffer[1] == L':';
+    return !doubleColon;
 }

@@ -29,13 +29,15 @@ FLT_PREOP_CALLBACK_STATUS FLTAPI DsPreCleanupCallback(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Outptr_result_maybenull_ PVOID *CompletionContext
 ) {
-    UNREFERENCED_PARAMETER(Data);
     DSR_ENTER(PASSIVE_LEVEL);
     *CompletionContext = NULL;
     PDS_STREAM_CONTEXT StreamContext = NULL;
     DSR_STATUS = FltGetStreamContext(FltObjects->Instance, FltObjects->FileObject, &StreamContext);
     if (DSR_STATUS == STATUS_NOT_FOUND || DSR_STATUS == STATUS_NOT_SUPPORTED)
         DSR_RETURN(STATUS_SUCCESS);
+
+    DsStreamRemoveHandle(StreamContext);
+
     DSR_ERROR_HANDLER({});
     FltReleaseContextSafe(StreamContext);
     return FLT_PREOP_SUCCESS_NO_CALLBACK;

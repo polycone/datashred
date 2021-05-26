@@ -129,10 +129,19 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
             DEBUG_ONLY(.Magic = STREAM_CONTEXT_PARAMETERS_MAGIC),
             .FltObjects = FltObjects,
             .FileNameInfo = fileNameInfo,
-            .FileContext = fileContext
+            .FileContext = fileContext,
+            .InstanceContext = instanceContext
         ),
         &streamContext
     ));
+
+    if (DsStreamAddHandle(streamContext, Data) == STATUS_STREAM_LOCKED) {
+        FltCancelFileOpen(FltObjects->Instance, FltObjects->FileObject);
+        Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+        FltReleaseContext(fileContext);
+        FltReleaseContext(streamContext);
+        DSR_LEAVE();
+    }
 
     DSR_ERROR_HANDLER({});
 
@@ -189,6 +198,7 @@ static NTSTATUS DsCreateStreamContextWrapper(_In_opt_ PVOID Parameters, _Inout_ 
 #endif
     DSR_ASSERT(DsCreateStreamContext(
         parameters->FltObjects,
+        parameters->InstanceContext,
         parameters->FileContext,
         parameters->FileNameInfo,
         (PDS_STREAM_CONTEXT *)Context

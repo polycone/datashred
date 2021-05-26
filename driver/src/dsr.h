@@ -92,3 +92,12 @@
 #define DSR_DECLARE(var, type)                      \
     type var;                                       \
     RtlZeroMemory(&var, sizeof(type));
+
+#define DSR_CRITICAL_EXCLUSIVE(lock, block)         \
+    FltAcquirePushLockExclusive(lock);              \
+    block;                                          \
+__critical_exit:                                    \
+    FltReleasePushLock(lock);
+
+#define DSR_CRITICAL_LEAVE()                        \
+    goto __critical_exit;

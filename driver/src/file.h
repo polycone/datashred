@@ -20,4 +20,4 @@
 #include <ntdef.h>
 
 BOOLEAN DsIsDataStream(_In_ PUNICODE_STRING StreamName);
-BOOLEAN DsIsMainStream(_In_ PUNICODE_STRING StreamName);
+BOOLEAN DsIsAlternateStream(_In_ PUNICODE_STRING StreamName);
