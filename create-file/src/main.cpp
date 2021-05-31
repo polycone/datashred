@@ -252,6 +252,8 @@ void executeNtOpen(wistringstream &input) {
     wstring name;
     input >> name;
     DWORD dwDesiredAccess = parseDesiredAccess(input);
+    if (dwDesiredAccess == 0)
+        dwDesiredAccess = SYNCHRONIZE | FILE_READ_ATTRIBUTES;
     DWORD dwShareMode = parseShareMode(input);
     DWORD dwCreationDisposition = parseCreationDisposition(input, ntDispositions, FILE_OPEN);
     if (name.empty()) {
