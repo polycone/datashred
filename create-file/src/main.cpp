@@ -31,16 +31,67 @@
 
 using namespace std;
 
+#define FILE_SUPERSEDE                  0x00000000
+#define FILE_OPEN                       0x00000001
+#define FILE_CREATE                     0x00000002
+#define FILE_OPEN_IF                    0x00000003
+#define FILE_OVERWRITE                  0x00000004
+#define FILE_OVERWRITE_IF               0x00000005
+
+typedef struct _IO_STATUS_BLOCK {
+    union {
+        NTSTATUS Status;
+        PVOID Pointer;
+    } DUMMYUNIONNAME;
+
+    ULONG_PTR Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+typedef ULONG ACCESS_MASK;
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWCH Buffer;
+} UNICODE_STRING;
+typedef UNICODE_STRING *PUNICODE_STRING;
+
+typedef struct _OBJECT_ATTRIBUTES {
+    ULONG Length;
+    HANDLE RootDirectory;
+    PUNICODE_STRING ObjectName;
+    ULONG Attributes;
+    PVOID SecurityDescriptor;
+    PVOID SecurityQualityOfService;
+} OBJECT_ATTRIBUTES;
+typedef OBJECT_ATTRIBUTES *POBJECT_ATTRIBUTES;
+
+typedef NTSTATUS(NTAPI *NtCreateFileRoutine)(
+    PHANDLE FileHandle,
+    ACCESS_MASK DesiredAccess,
+    POBJECT_ATTRIBUTES ObjectAttributes,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    PLARGE_INTEGER AllocationSize,
+    ULONG FileAttributes,
+    ULONG ShareAccess,
+    ULONG CreateDisposition,
+    ULONG CreateOptions,
+    PVOID EaBuffer,
+    ULONG EaLength
+);
+
 struct File {
     HANDLE handle;
     wstring name;
+    bool nt;
     DWORD dwDesiredAccess;
     DWORD dwShareMode;
     DWORD dwCreationDisposition;
     DWORD dwFlagsAndAttributes;
 
-    File(HANDLE handle, wstring &name, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
+    File(HANDLE handle, bool nt, wstring &name, DWORD dwDesiredAccess, DWORD dwShareMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) {
         this->handle = handle;
+        this->nt = nt;
         this->name = name;
         this->dwDesiredAccess = dwDesiredAccess;
         this->dwShareMode = dwShareMode;
@@ -50,6 +101,7 @@ struct File {
 };
 
 const wstring S_OPEN(L"open");
+const wstring S_NT_OPEN(L"nt-open");
 const wstring S_CLOSE(L"close");
 const wstring S_FILE(L"file");
 const wstring S_SET(L"set");
@@ -63,12 +115,6 @@ const wstring S_DISPOSITION(L"disposition");
 const wstring S_DISPOSITION_EX(L"disposition-ex");
 const wstring S_POSIX_SEMANTICS(L"posix");
 
-const wstring S_CREATE_NEW(L"create-new");
-const wstring S_CREATE_ALWAYS(L"create-always");
-const wstring S_OPEN_EXISTING(L"open-existing");
-const wstring S_OPEN_ALWAYS(L"open-always");
-const wstring S_TRUNCATE_EXISTING(L"truncate-existing");
-
 const wchar_t F_READ(L'r');
 const wchar_t F_WRITE(L'w');
 const wchar_t F_DELETE(L'd');
@@ -77,7 +123,26 @@ const wchar_t F_DELETE_ON_CLOSE(L'd');
 const wchar_t F_BACKUP_SEMANTICS(L'b');
 const wchar_t F_POSIX_SEMANTICS(L'p');
 
+HMODULE ntdll;
+NtCreateFileRoutine NtCreateFile;
 vector<File> files;
+
+vector<wstring> dispositions = {
+    wstring(L""),
+    wstring(L"create-new"),
+    wstring(L"create-always"),
+    wstring(L"open-existing"),
+    wstring(L"open-always"),
+    wstring(L"truncate-existing")
+};
+vector<wstring> ntDispositions = {
+    wstring(L"supersede"),
+    wstring(L"open"),
+    wstring(L"create"),
+    wstring(L"open-if"),
+    wstring(L"overwrite"),
+    wstring(L"overwrite-if")
+};
 
 DWORD parseDesiredAccess(wistringstream &input) {
     wstring access;
@@ -118,38 +183,18 @@ DWORD parseFlagsAndAttributes(wistringstream &input) {
     return dwFlagsAndAttributes;
 }
 
-DWORD parseCreationDisposition(wistringstream &input) {
+DWORD parseCreationDisposition(wistringstream &input, vector<wstring> const &dispositions, DWORD defaultDisposition) {
     wstring disposition;
     input >> disposition;
     DWORD dwCreationDisposition = 0;
-    if (disposition == S_CREATE_NEW)
-        dwCreationDisposition = CREATE_NEW;
-    else if (disposition == S_CREATE_ALWAYS)
-        dwCreationDisposition = CREATE_ALWAYS;
-    else if (disposition == S_OPEN_EXISTING)
-        dwCreationDisposition = OPEN_EXISTING;
-    else if (disposition == S_OPEN_ALWAYS)
-        dwCreationDisposition = OPEN_ALWAYS;
-    else if (disposition == S_TRUNCATE_EXISTING)
-        dwCreationDisposition = TRUNCATE_EXISTING;
-    else
-        dwCreationDisposition = OPEN_EXISTING;
-    return dwCreationDisposition;
+    for (int i = 0; i < dispositions.size(); i++)
+        if (!dispositions[i].empty() && disposition == dispositions[i])
+            return i;
+    return defaultDisposition;
 }
 
-wstring getCreationDispositionString(DWORD dwCreationDisposition) {
-    switch (dwCreationDisposition) {
-        case CREATE_NEW:
-            return S_CREATE_NEW;
-        case CREATE_ALWAYS:
-            return S_CREATE_ALWAYS;
-        case OPEN_EXISTING:
-            return S_OPEN_EXISTING;
-        case OPEN_ALWAYS:
-            return S_OPEN_ALWAYS;
-        case TRUNCATE_EXISTING:
-            return S_TRUNCATE_EXISTING;
-    }
+wstring getCreationDispositionString(DWORD dwCreationDisposition, vector<wstring> const &dispositions) {
+    return dispositions[dwCreationDisposition];
 }
 
 wstring getDesiredAccessString(DWORD dwDesiredAccess) {
@@ -186,16 +231,66 @@ wstring getFlagsAndAttributesString(DWORD dwFlagsAndAttributes) {
 void executeOpen(wistringstream &input) {
     wstring name;
     input >> name;
+    if (name.empty()) {
+        wcout << "File name isn't specified" << endl;
+        return;
+    }
     DWORD dwDesiredAccess = parseDesiredAccess(input);
     DWORD dwShareMode = parseShareMode(input);
     DWORD dwFlagsAndAttributes = parseFlagsAndAttributes(input);
-    DWORD dwCreationDisposition = parseCreationDisposition(input);
+    DWORD dwCreationDisposition = parseCreationDisposition(input, dispositions, OPEN_EXISTING);
     HANDLE hFile = CreateFileW(name.c_str(), dwDesiredAccess, dwShareMode, NULL, dwCreationDisposition, dwFlagsAndAttributes, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
-        files.push_back(File(hFile, name, dwDesiredAccess, dwShareMode, dwCreationDisposition, dwFlagsAndAttributes));
+        files.push_back(File(hFile, false, name, dwDesiredAccess, dwShareMode, dwCreationDisposition, dwFlagsAndAttributes));
         wcout << "File " << name << " opened at " << files.size() << "." << endl;
     } else {
         wcout << "Unable to open " << name << ". Error = " << GetLastError() << "." << endl;
+    }
+}
+
+void executeNtOpen(wistringstream &input) {
+    wstring name;
+    input >> name;
+    DWORD dwDesiredAccess = parseDesiredAccess(input);
+    DWORD dwShareMode = parseShareMode(input);
+    DWORD dwCreationDisposition = parseCreationDisposition(input, ntDispositions, FILE_OPEN);
+    if (name.empty()) {
+        wcout << "File name isn't specified" << endl;
+        return;
+    }
+    wstring fqn;
+    if (name[0] != L'\\') {
+        DWORD length = GetFullPathNameW(name.c_str(), 0, NULL, NULL);
+        PWCH nameBuffer = (PWCH)malloc(length * sizeof(WCHAR));
+        GetFullPathNameW(name.c_str(), length, nameBuffer, NULL);
+        fqn = wstring(L"\\??\\");
+        fqn.append(nameBuffer, length - 1);
+        free(nameBuffer);
+    } else {
+        fqn = name;
+    }
+
+    UNICODE_STRING uFqn;
+    uFqn.Length = fqn.length() * sizeof(WCHAR);
+    uFqn.MaximumLength = fqn.length() * sizeof(WCHAR);
+    uFqn.Buffer = (PWCH)fqn.c_str();
+
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    IO_STATUS_BLOCK status;
+    OBJECT_ATTRIBUTES attibutes;
+    attibutes.Length = sizeof(OBJECT_ATTRIBUTES);
+    attibutes.RootDirectory = NULL;
+    attibutes.ObjectName = &uFqn;
+    attibutes.Attributes = 0;
+    attibutes.SecurityDescriptor = NULL;
+    attibutes.SecurityQualityOfService = NULL;
+
+    NTSTATUS result = NtCreateFile(&hFile, dwDesiredAccess, &attibutes, &status, NULL, 0, dwShareMode, dwCreationDisposition, 0, NULL, 0);
+    if (hFile != INVALID_HANDLE_VALUE) {
+        files.push_back(File(hFile, true, name, dwDesiredAccess, dwShareMode, dwCreationDisposition, 0));
+        wcout << "File " << name << " opened at " << files.size() << "." << endl;
+    } else {
+        wcout << "Unable to open " << name << ". Error = 0x" << hex << result << "." << endl;
     }
 }
 
@@ -220,19 +315,20 @@ void executeClose(wistringstream &input) {
 }
 
 void executeList() {
-    wprintf(L"#  |Name            |Access |Share |Flags   |Disposition     |Handle\n");
+    wprintf(L"#  |Name            |Access |Share |Flags   |Disposition     |NT |Handle\n");
     for (int i = 0; i < files.size(); ++i) {
         File &file = files[i];
         if (file.handle == INVALID_HANDLE_VALUE)
             continue;
         wprintf(
-            L"%-2d |%-15s |%-6s |%-5s |%-7s |%-15s |0x%016llX\n",
+            L"%-2d |%-15s |%-6s |%-5s |%-7s |%-15s |%-2s |0x%016llX\n",
             i + 1,
             file.name.c_str(),
             getDesiredAccessString(file.dwDesiredAccess).c_str(),
             getShareModeString(file.dwShareMode).c_str(),
             getFlagsAndAttributesString(file.dwFlagsAndAttributes).c_str(),
-            getCreationDispositionString(file.dwCreationDisposition).c_str(),
+            getCreationDispositionString(file.dwCreationDisposition, file.nt ? ntDispositions : dispositions).c_str(),
+            file.nt ? L"*" : L"",
             (unsigned __int64)file.handle
         );
     }
@@ -310,7 +406,19 @@ void executeFile(wistringstream &input) {
         wcout << "Unknown operation " << operation << endl;
 }
 
+void initNt() {
+    ntdll = LoadLibraryW(L"ntdll.dll");
+    if (ntdll == NULL) {
+        wcout << "Warning: Unable to load ntdll.dll. Error = " << GetLastError() << "." << endl;
+        return;
+    }
+    NtCreateFile = (NtCreateFileRoutine)GetProcAddress(ntdll, "NtCreateFile");
+    if (NtCreateFile == NULL)
+        wcout << "Warning: Unable to locate procedure NtCreateFile. Error = " << GetLastError() << "." << endl;
+}
+
 int wmain(int argc, wchar_t *argv[]) {
+    initNt();
     while (true) {
         wcout << L"> ";
         wstring line;
@@ -320,6 +428,8 @@ int wmain(int argc, wchar_t *argv[]) {
         input >> cmd;
         if (cmd == S_OPEN)
             executeOpen(input);
+        else if (cmd == S_NT_OPEN)
+            executeNtOpen(input);
         else if (cmd == S_CLOSE)
             executeClose(input);
         else if (cmd == S_FILE)
