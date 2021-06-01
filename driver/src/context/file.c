@@ -25,12 +25,12 @@
 #endif
 
 NTSTATUS DsCreateFileContext(
-    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _In_ PFLT_FILTER Filter,
     _Outptr_ PDS_FILE_CONTEXT *Context
 ) {
     DSR_ENTER(APC_LEVEL);
     PDS_FILE_CONTEXT context = NO_CONTEXT;
-    DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_FILE_CONTEXT, sizeof(DS_FILE_CONTEXT), PagedPool, &context));
+    DSR_ASSERT(FltAllocateContext(Filter, FLT_FILE_CONTEXT, sizeof(DS_FILE_CONTEXT), PagedPool, &context));
 
     RtlZeroMemory(context, sizeof(DS_FILE_CONTEXT));
     FltInitializePushLock(&context->Lock);

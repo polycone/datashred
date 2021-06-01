@@ -22,22 +22,28 @@
 #include <file.h>
 #include "create.h"
 
-static NTSTATUS DsCreateContext(
+static NTSTATUS DsGetOrSetContext(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
-    _In_ DS_CONTEXT_DESCRIPTOR *Descriptor,
+    _In_ PCDS_CONTEXT_DESCRIPTOR Descriptor,
     _In_opt_ PVOID Parameters,
-    _Outptr_ PFLT_CONTEXT *Context
+    _Out_ PFLT_CONTEXT *Context
 );
-static NTSTATUS DsCreateFileContextWrapper(_In_opt_ PVOID Parameters, _Inout_ PFLT_CONTEXT Context);
-static NTSTATUS DsCreateStreamContextWrapper(_In_opt_ PVOID Parameters, _Inout_ PFLT_CONTEXT Context);
+static NTSTATUS DsSetupRelatedContexts(
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation,
+    _Out_ PDS_STREAM_CONTEXT *Context
+);
+static NTSTATUS DsCreateFileContextWrapper(_In_opt_ PVOID Parameters, _Inout_ PFLT_CONTEXT *Context);
+static NTSTATUS DsCreateStreamContextWrapper(_In_opt_ PVOID Parameters, _Inout_ PFLT_CONTEXT *Context);
 
-static DS_CONTEXT_DESCRIPTOR DsFileContextDescriptor = { FltGetFileContext, FltSetFileContext, DsCreateFileContextWrapper };
-static DS_CONTEXT_DESCRIPTOR DsStreamContextDescriptor = { FltGetStreamContext, FltSetStreamContext, DsCreateStreamContextWrapper };
+static CONST DS_CONTEXT_DESCRIPTOR DS_FILE_CONTEXT_DESCRIPTOR = { FltGetFileContext, FltSetFileContext, DsCreateFileContextWrapper };
+static CONST DS_CONTEXT_DESCRIPTOR DS_STREAM_CONTEXT_DESCRIPTOR = { FltGetStreamContext, FltSetStreamContext, DsCreateStreamContextWrapper };
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, DsPreCreateCallback)
 #pragma alloc_text(PAGE, DsPostCreateCallback)
-#pragma alloc_text(PAGE, DsCreateContext)
+#pragma alloc_text(PAGE, DsGetOrSetContext)
+#pragma alloc_text(PAGE, DsSetupRelatedContexts)
 #pragma alloc_text(PAGE, DsCreateFileContextWrapper)
 #pragma alloc_text(PAGE, DsCreateStreamContextWrapper)
 #endif
@@ -86,8 +92,6 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
 ) {
     DSR_ENTER(PASSIVE_LEVEL);
     PFLT_FILE_NAME_INFORMATION fileNameInfo = (PFLT_FILE_NAME_INFORMATION)CompletionContext;
-    PDS_INSTANCE_CONTEXT instanceContext = NULL;
-    PDS_FILE_CONTEXT fileContext = NULL;
     PDS_STREAM_CONTEXT streamContext = NULL;
 
     if (FlagOn(Flags, FLTFL_POST_OPERATION_DRAINING))
@@ -106,55 +110,64 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     if (!DsIsDataStream(&fileNameInfo->Stream))
         DSR_LEAVE();
 
-    DSR_ASSERT(FltGetInstanceContext(FltObjects->Instance, &instanceContext));
+    DSR_ASSERT(DsSetupRelatedContexts(FltObjects, fileNameInfo, &streamContext));
+
+    if (DsStreamAddHandle(streamContext, Data) == STATUS_STREAM_LOCKED) {
+        FltCancelFileOpen(FltObjects->Instance, FltObjects->FileObject);
+        Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+        DSR_LEAVE();
+    }
+
+    DSR_ERROR_HANDLER({});
+    FltReleaseContextSafe(streamContext);
+    FltReleaseFileNameInformation(fileNameInfo);
+    return FLT_POSTOP_FINISHED_PROCESSING;
+}
+
+static NTSTATUS DsSetupRelatedContexts(
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation,
+    _Out_ PDS_STREAM_CONTEXT *Context
+) {
+    DSR_ENTER(PASSIVE_LEVEL);
+    PDS_INSTANCE_CONTEXT instanceContext = NULL;
+    PDS_FILE_CONTEXT fileContext = NULL;
+    PDS_STREAM_CONTEXT streamContext = NULL;
 
     if (!FltSupportsFileContextsEx(FltObjects->FileObject, FltObjects->Instance))
         DSR_ASSERT(STATUS_FILE_CONTEXT_NOT_SUPPORTED);
     if (!FltSupportsStreamContexts(FltObjects->FileObject))
         DSR_ASSERT(STATUS_STREAM_CONTEXT_NOT_SUPPORTED);
 
-    DSR_ASSERT(DsCreateContext(
-        FltObjects,
-        &DsFileContextDescriptor,
-        &INLINE_TYPE(DS_FILE_CONTEXT_PARAMETERS,
-            DEBUG_ONLY(.Magic = FILE_CONTEXT_PARAMETERS_MAGIC),
-            .FltObjects = FltObjects
-        ),
-        &fileContext
-    ));
-    DSR_ASSERT(DsCreateContext(
-        FltObjects,
-        &DsStreamContextDescriptor,
-        &INLINE_TYPE(DS_STREAM_CONTEXT_PARAMETERS,
-            DEBUG_ONLY(.Magic = STREAM_CONTEXT_PARAMETERS_MAGIC),
-            .FltObjects = FltObjects,
-            .FileNameInfo = fileNameInfo,
-            .FileContext = fileContext,
-            .InstanceContext = instanceContext
-        ),
-        &streamContext
-    ));
+    DSR_ASSERT(FltGetInstanceContext(FltObjects->Instance, &instanceContext));
 
-    if (DsStreamAddHandle(streamContext, Data) == STATUS_STREAM_LOCKED) {
-        FltCancelFileOpen(FltObjects->Instance, FltObjects->FileObject);
-        Data->IoStatus.Status = STATUS_ACCESS_DENIED;
-        FltReleaseContext(fileContext);
-        FltReleaseContext(streamContext);
-        DSR_LEAVE();
-    }
+    DS_FILE_CONTEXT_PARAMETERS fileContextParams = {
+        DEBUG_ONLY(.Magic = FILE_CONTEXT_PARAMETERS_MAGIC),
+        .Filter = FltObjects->Filter
+    };
+    DSR_ASSERT(DsGetOrSetContext(FltObjects, &DS_FILE_CONTEXT_DESCRIPTOR, &fileContextParams, &fileContext));
 
+    DS_STREAM_CONTEXT_PARAMETERS streamContextParams = {
+        DEBUG_ONLY(.Magic = STREAM_CONTEXT_PARAMETERS_MAGIC),
+        .Filter = FltObjects->Filter,
+        .FileNameInfo = FileNameInformation,
+        .FileContext = fileContext,
+        .InstanceContext = instanceContext
+    };
+    DSR_ASSERT(DsGetOrSetContext(FltObjects, &DS_STREAM_CONTEXT_DESCRIPTOR, &streamContextParams, &streamContext));
+
+    *Context = streamContext;
     DSR_ERROR_HANDLER({});
-
     FltReleaseContextSafe(instanceContext);
-    FltReleaseFileNameInformation(fileNameInfo);
-    return FLT_POSTOP_FINISHED_PROCESSING;
+    FltReleaseContextSafe(fileContext);
+    return DSR_STATUS;
 }
 
-static NTSTATUS DsCreateContext(
+static NTSTATUS DsGetOrSetContext(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
-    _In_ DS_CONTEXT_DESCRIPTOR *Descriptor,
+    _In_ PCDS_CONTEXT_DESCRIPTOR Descriptor,
     _In_opt_ PVOID Parameters,
-    _Outptr_ PFLT_CONTEXT *Context
+    _Out_ PFLT_CONTEXT *Context
 ) {
     DSR_ENTER(APC_LEVEL);
     PFLT_CONTEXT context = NULL_CONTEXT;
@@ -172,8 +185,9 @@ static NTSTATUS DsCreateContext(
     }
     DSR_ASSERT_SUCCESS();
     *Context = context;
-    DSR_ERROR_HANDLER({});
-    FltReleaseContextSafe(context);
+    DSR_ERROR_HANDLER({
+        FltReleaseContextSafe(context);
+    });
     return DSR_STATUS;
 }
 
@@ -184,7 +198,7 @@ static NTSTATUS DsCreateFileContextWrapper(_In_opt_ PVOID Parameters, _Inout_ PF
     if (parameters == NULL || parameters->Magic != FILE_CONTEXT_PARAMETERS_MAGIC)
         DsRaiseAssertonFailure();
 #endif
-    DSR_ASSERT(DsCreateFileContext(parameters->FltObjects, (PDS_FILE_CONTEXT *)Context));
+    DSR_ASSERT(DsCreateFileContext(parameters->Filter, (PDS_FILE_CONTEXT *)Context));
     DSR_ERROR_HANDLER({});
     return DSR_STATUS;
 }
@@ -197,7 +211,7 @@ static NTSTATUS DsCreateStreamContextWrapper(_In_opt_ PVOID Parameters, _Inout_ 
         DsRaiseAssertonFailure();
 #endif
     DSR_ASSERT(DsCreateStreamContext(
-        parameters->FltObjects,
+        parameters->Filter,
         parameters->InstanceContext,
         parameters->FileContext,
         parameters->FileNameInfo,

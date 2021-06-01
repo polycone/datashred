@@ -59,11 +59,11 @@ typedef struct _DS_STREAM_CONTEXT {
 NTSTATUS DsCreateInstanceContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Out_ PDS_INSTANCE_CONTEXT *Context);
 VOID DsCleanupInstanceContext(_Inout_ PDS_INSTANCE_CONTEXT Context);
 
-NTSTATUS DsCreateFileContext(_In_ PCFLT_RELATED_OBJECTS FltObjects, _Outptr_ PDS_FILE_CONTEXT *Context);
+NTSTATUS DsCreateFileContext(_In_ PFLT_FILTER Filter, _Outptr_ PDS_FILE_CONTEXT *Context);
 VOID DsCleanupFileContext(_Inout_ PDS_FILE_CONTEXT Context);
 
 NTSTATUS DsCreateStreamContext(
-    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _In_ PFLT_FILTER Filter,
     _In_ PDS_INSTANCE_CONTEXT InstanceContext,
     _In_ PDS_FILE_CONTEXT FileContext,
     _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation,

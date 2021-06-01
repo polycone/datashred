@@ -28,7 +28,7 @@
 #endif
 
 NTSTATUS DsCreateStreamContext(
-    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _In_ PFLT_FILTER Filter,
     _In_ PDS_INSTANCE_CONTEXT InstanceContext,
     _In_ PDS_FILE_CONTEXT FileContext,
     _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation,
@@ -36,7 +36,7 @@ NTSTATUS DsCreateStreamContext(
 ) {
     DSR_ENTER(APC_LEVEL);
     PDS_STREAM_CONTEXT context = NO_CONTEXT;
-    DSR_ASSERT(FltAllocateContext(FltObjects->Filter, FLT_STREAM_CONTEXT, sizeof(DS_STREAM_CONTEXT), PagedPool, &context));
+    DSR_ASSERT(FltAllocateContext(Filter, FLT_STREAM_CONTEXT, sizeof(DS_STREAM_CONTEXT), PagedPool, &context));
 
     RtlZeroMemory(context, sizeof(DS_STREAM_CONTEXT));
     FltReferenceContext(FileContext);
