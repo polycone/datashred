@@ -74,12 +74,6 @@
                 )(__VA_ARGS__)                      \
     )
 
-#if defined(DBG) && defined(RAISE_ASSERTION_FAILURE)
-#define DsRaiseAssertonFailure()                    DbgRaiseAssertionFailure()
-#else
-#define DsRaiseAssertonFailure()                    NOP_FUNCTION
-#endif // RAISE_ASSERTION_FAILURE
-
 #define __DSR_ERROR_STRING                          "Unexpected error: 0x%08X"
 #define DSR_ERROR_HANDLER(block)                    \
        goto __exit;                                 \

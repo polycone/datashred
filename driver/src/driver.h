@@ -34,14 +34,17 @@
 #pragma warning(disable:4201) // Nameless structs/unions
 
 /* Empty aliases */
+
 #define NO_FLAGS                                    0
 #define NO_CALLBACK                                 NULL
 #define NO_CONTEXT                                  NULL
 
 /* Configuration */
+
 #define DS_DEFAULT_POOL_TAG                         'pDsD'
 
 /* Kernel debug messaging */
+
 #ifdef DBG
 #define DsDbgPrint(level, format, ...)              DbgPrintEx(DPFLTR_IHVDRIVER_ID, level, format, __VA_ARGS__)
 #define LOG_PREFIX                                  DRIVER_NAME "!" __FUNCTION__ ": "
@@ -55,12 +58,19 @@
 #endif // DBG
 
 /* Inline initializtion helpers */
+
 #define INLINE_TYPE(type, ...)                      (type) { __VA_ARGS__ }
 
 #ifdef DBG
 #define DEBUG_ONLY(statement)                       statement
 #else
 #define DEBUG_ONLY(statement)                       NOP_FUNCTION
+#endif
+
+#if defined(DBG) && defined(RAISE_ASSERTION_FAILURE)
+#define DsRaiseAssertonFailure()                    DbgRaiseAssertionFailure()
+#else
+#define DsRaiseAssertonFailure()                    NOP_FUNCTION
 #endif
 
 #define FltReleaseContextSafe(ctx)                  \
@@ -72,6 +82,7 @@
         FltObjectDereference(obj);                  \
 
 /* Filter functions shortcuts */
+
 #define DsQueryStandardInformationFile(objs, info)  \
     FltQueryInformationFile(                        \
         objs->Instance,                             \
