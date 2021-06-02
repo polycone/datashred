@@ -76,6 +76,9 @@
     <ClInclude Include="src\callback\create.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\callback\status.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Inf Include="Datashred.inf" />

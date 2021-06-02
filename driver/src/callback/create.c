@@ -21,6 +21,7 @@
 #include <dsr.h>
 #include <file.h>
 #include "create.h"
+#include "status.h"
 
 static NTSTATUS DsGetOrSetContext(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -58,11 +59,11 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     PFLT_FILE_NAME_INFORMATION fileNameInfo = NULL;
 
     if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DIRECTORY_FILE))
-        DSR_RETURN(FLT_PREOP_SUCCESS_NO_CALLBACK);
+        DSR_RETURN(STATUS_PREOP_SUCCESS_NO_CALLBACK);
     if (FlagOn(Data->Iopb->OperationFlags, SL_OPEN_PAGING_FILE))
-        DSR_RETURN(FLT_PREOP_SUCCESS_NO_CALLBACK);
+        DSR_RETURN(STATUS_PREOP_SUCCESS_NO_CALLBACK);
     if (FlagOn(Data->Iopb->TargetFileObject->Flags, FO_VOLUME_OPEN))
-        DSR_RETURN(FLT_PREOP_SUCCESS_NO_CALLBACK);
+        DSR_RETURN(STATUS_PREOP_SUCCESS_NO_CALLBACK);
 
     DSR_ASSERT(FltGetFileNameInformation(Data, FLT_FILE_NAME_OPENED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP, &fileNameInfo));
 
@@ -74,14 +75,16 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
 
     *CompletionContext = fileNameInfo;
 
-    DSR_STATUS = DSR_SUCCESS ? FLT_PREOP_SYNCHRONIZE : FLT_PREOP_COMPLETE;
+    DSR_STATUS = STATUS_PREOP_SYNCHRONIZE;
     DSR_ERROR_HANDLER({
         if (fileNameInfo != NULL)
             FltReleaseFileNameInformation(fileNameInfo);
         Data->IoStatus.Status = DSR_STATUS;
+        DSR_STATUS = STATUS_PREOP_COMPLETE;
     });
 
-    return DSR_STATUS;
+    ASSERT_FLT_PREOP_CALLBACK_STATUS(DSR_STATUS);
+    return TO_FLT_PREOP_CALLBACK_STATUS(DSR_STATUS);
 }
 
 FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
