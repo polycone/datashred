@@ -73,13 +73,14 @@
 #define DsRaiseAssertonFailure()                    NOP_FUNCTION
 #endif
 
-#define FltReleaseContextSafe(ctx)                  \
-    if (ctx != NO_CONTEXT)                          \
-        FltReleaseContext(ctx);
+#define __SAFE_CALL(func, arg)                      \
+    if (arg != NULL)                                \
+        func(arg)
 
-#define FltObjectDereferenceSafe(obj)               \
-    if (obj != NULL)                                \
-        FltObjectDereference(obj);                  \
+#define FltReleaseContextSafe(arg)                  __SAFE_CALL(FltReleaseContext, arg);
+#define FltObjectDereferenceSafe(arg)               __SAFE_CALL(FltObjectDereference, arg);
+#define FltReleaseFileNameInformationSafe(arg)      __SAFE_CALL(FltReleaseFileNameInformation, arg);
+#define FltReferenceContextSafe(arg)                __SAFE_CALL(FltReferenceContext, arg);
 
 /* Filter functions shortcuts */
 

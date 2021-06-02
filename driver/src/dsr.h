@@ -45,26 +45,27 @@
     NTSTATUS DSR_STATUS = STATUS_SUCCESS;
 
 #define DSR_LEAVE()                                 \
-        goto __exit;
+    goto __exit;
 
-#define DSR_RETURN(status)                          \
-    {                                               \
-        DSR_STATUS = status;                        \
-        goto __exit;                                \
-    }
+#define DSR_RETURN(status) {                        \
+    DSR_STATUS = status;                            \
+    goto __exit;                                    \
+}
 
 #define DSR_ASSERT_SUCCESS()                        \
     if (!DSR_SUCCESS)                               \
         goto __error_handler;
 
-#define __DSR_ASSERT_WITH_SUPPRESS(status, suppress)\
+#define __DSR_ASSERT_WITH_SUPPRESS(status, suppress) { \
     DSR_STATUS = status;                            \
     suppress;                                       \
-    DSR_ASSERT_SUCCESS();
+    DSR_ASSERT_SUCCESS();                           \
+}
 
-#define __DSR_ASSERT(status)                        \
+#define __DSR_ASSERT(status) {                      \
     DSR_STATUS = status;                            \
-    DSR_ASSERT_SUCCESS();
+    DSR_ASSERT_SUCCESS();                           \
+}
 
 #define DSR_ASSERT(...)                             \
     __VA_PASS__(__GET_MACRO_2__(                    \

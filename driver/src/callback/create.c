@@ -20,6 +20,7 @@
 #include <context.h>
 #include <dsr.h>
 #include <file.h>
+#include <memory.h>
 #include "create.h"
 #include "status.h"
 
@@ -57,6 +58,7 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
     DSR_ENTER(PASSIVE_LEVEL);
     *CompletionContext = NULL;
     PFLT_FILE_NAME_INFORMATION fileNameInfo = NULL;
+    PDS_STREAM_CONTEXT streamContext = NULL;
 
     if (FlagOn(Data->Iopb->Parameters.Create.Options, FILE_DIRECTORY_FILE))
         DSR_RETURN(STATUS_PREOP_SUCCESS_NO_CALLBACK);
@@ -66,6 +68,9 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
         DSR_RETURN(STATUS_PREOP_SUCCESS_NO_CALLBACK);
 
     DSR_ASSERT(FltGetFileNameInformation(Data, FLT_FILE_NAME_OPENED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP, &fileNameInfo));
+    DSR_ASSERT(FltParseFileNameInformation(fileNameInfo));
+    if (!DsIsDataStream(&fileNameInfo->Stream))
+        DSR_RETURN(STATUS_PREOP_SUCCESS_NO_CALLBACK);
 
     ULONG disposition = Data->Iopb->Parameters.Create.Options >> 24;
     if (disposition == FILE_SUPERSEDE || disposition == FILE_OVERWRITE || disposition == FILE_OVERWRITE_IF) {
@@ -73,16 +78,22 @@ FLT_PREOP_CALLBACK_STATUS DsPreCreateCallback(
         // TODO: If everything was fine process the file.
     }
 
-    *CompletionContext = fileNameInfo;
+    PDS_CREATE_COMPLETION_CONTEXT context = NULL;
+    DSR_ASSERT(DsMemAllocType(DS_CREATE_COMPLETION_CONTEXT, &context));
+    FltReferenceFileNameInformation(fileNameInfo);
+    context->FileNameInformation = fileNameInfo;
+    FltReferenceContextSafe(streamContext);
+    context->StreamContext = streamContext;
+    *CompletionContext = context;
 
     DSR_STATUS = STATUS_PREOP_SYNCHRONIZE;
     DSR_ERROR_HANDLER({
-        if (fileNameInfo != NULL)
-            FltReleaseFileNameInformation(fileNameInfo);
         Data->IoStatus.Status = DSR_STATUS;
         DSR_STATUS = STATUS_PREOP_COMPLETE;
     });
 
+    FltReleaseFileNameInformationSafe(fileNameInfo);
+    FltReleaseContextSafe(streamContext);
     ASSERT_FLT_PREOP_CALLBACK_STATUS(DSR_STATUS);
     return TO_FLT_PREOP_CALLBACK_STATUS(DSR_STATUS);
 }
@@ -94,7 +105,7 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     _In_ FLT_POST_OPERATION_FLAGS Flags
 ) {
     DSR_ENTER(PASSIVE_LEVEL);
-    PFLT_FILE_NAME_INFORMATION fileNameInfo = (PFLT_FILE_NAME_INFORMATION)CompletionContext;
+    PDS_CREATE_COMPLETION_CONTEXT context = (PDS_CREATE_COMPLETION_CONTEXT)CompletionContext;
     PDS_STREAM_CONTEXT streamContext = NULL;
 
     if (FlagOn(Flags, FLTFL_POST_OPERATION_DRAINING))
@@ -109,11 +120,9 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     if (fileStandardInfo.Directory)
         DSR_LEAVE();
 
-    DSR_ASSERT(FltParseFileNameInformation(fileNameInfo));
-    if (!DsIsDataStream(&fileNameInfo->Stream))
-        DSR_LEAVE();
-
-    DSR_ASSERT(DsSetupRelatedContexts(FltObjects, fileNameInfo, &streamContext));
+    streamContext = context->StreamContext;
+    if (streamContext == NULL)
+        DSR_ASSERT(DsSetupRelatedContexts(FltObjects, context->FileNameInformation, &streamContext));
 
     if (DsStreamAddHandle(streamContext, Data) == STATUS_STREAM_LOCKED) {
         FltCancelFileOpen(FltObjects->Instance, FltObjects->FileObject);
@@ -122,8 +131,11 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
     }
 
     DSR_ERROR_HANDLER({});
+
+    DsMemFree(context);
     FltReleaseContextSafe(streamContext);
-    FltReleaseFileNameInformation(fileNameInfo);
+    FltReleaseFileNameInformationSafe(context->FileNameInformation);
+
     return FLT_POSTOP_FINISHED_PROCESSING;
 }
 
