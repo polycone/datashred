@@ -132,9 +132,9 @@ FLT_POSTOP_CALLBACK_STATUS DsPostCreateCallback(
 
     DSR_ERROR_HANDLER({});
 
-    DsMemFree(context);
     FltReleaseContextSafe(streamContext);
     FltReleaseFileNameInformationSafe(context->FileNameInformation);
+    DsMemFree(context);
 
     return FLT_POSTOP_FINISHED_PROCESSING;
 }
