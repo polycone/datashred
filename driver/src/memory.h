@@ -24,10 +24,14 @@
 #define TO_ADDRESS(pointer)                         (SIZE_T)(pointer)
 #define POINTER_AT_OFFSET(pointer, offset)          TO_POINTER(TO_ADDRESS(pointer) + (offset))
 
-NTSTATUS DsMemAlloc(SIZE_T Size, _Out_ PVOID *Pointer);
+#define DS_MEMORY_INIT_ZERO                         0x00000001
+
+NTSTATUS DsMemAllocEx(SIZE_T Size, ULONG Flags, _Out_ PVOID *Pointer);
 VOID DsMemFree(_In_ PVOID Pointer);
 
-#define DsMemAllocType(type, pointer)               DsMemAlloc(sizeof(type), pointer)
+#define DsMemAlloc(size, pointer)                   DsMemAllocEx(size, 0, pointer)
+
+#define DsMemAllocType(type, pointer)               DsMemAllocEx(sizeof(type), DS_MEMORY_INIT_ZERO, pointer)
 #define DsMemFreeSafe(pointer)                      \
     if (pointer != NULL)                            \
         DsMemFree(pointer);

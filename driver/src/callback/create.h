@@ -67,4 +67,17 @@ typedef struct _DS_FILE_CONTEXT_PARAMETERS {
 typedef struct _DS_CREATE_COMPLETION_CONTEXT {
     PFLT_FILE_NAME_INFORMATION FileNameInformation;
     PDS_STREAM_CONTEXT StreamContext;
+    ULONG DispositionStatus;
 } DS_CREATE_COMPLETION_CONTEXT, *PDS_CREATE_COMPLETION_CONTEXT;
+
+#define DS_FLT_FILE_NAME_OPENED_CACHED              FLT_FILE_NAME_OPENED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP
+
+#define OverrideFileObject(fltObjects, fileObject) { \
+    .Size = (fltObjects)->Size,                     \
+    .TransactionContext = (fltObjects)->TransactionContext, \
+    .Filter = (fltObjects)->Filter,                 \
+    .Volume = (fltObjects)->Volume,                 \
+    .Instance = (fltObjects)->Instance,             \
+    .FileObject = fileObject,                       \
+    .Transaction = (fltObjects)->Transaction,       \
+}

@@ -146,6 +146,7 @@
     <ClCompile Include="src\context\instance.c" />
     <ClCompile Include="src\context\stream.c" />
     <ClCompile Include="src\driver.c" />
+    <ClCompile Include="src\erase.c" />
     <ClCompile Include="src\file.c" />
     <ClCompile Include="src\memory.c" />
     <ClCompile Include="src\string.c" />
@@ -158,6 +159,7 @@
     <ClInclude Include="src\context.h" />
     <ClInclude Include="src\driver.h" />
     <ClInclude Include="src\dsr.h" />
+    <ClInclude Include="src\erase.h" />
     <ClInclude Include="src\file.h" />
     <ClInclude Include="src\memory.h" />
     <ClInclude Include="src\status.h" />

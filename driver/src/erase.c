@@ -17,25 +17,12 @@
  */
 
 #include "driver.h"
-#include "memory.h"
+#include "erase.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE, DsMemAllocEx)
-#pragma alloc_text(PAGE, DsMemFree)
+#pragma alloc_text(PAGE, DsEraseFile)
 #endif
 
-NTSTATUS DsMemAllocEx(SIZE_T Size, ULONG Flags, _Out_ PVOID *Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    PVOID pointer = ExAllocatePoolWithTag(PagedPool, Size, DS_DEFAULT_POOL_TAG);
-    if (pointer == NULL)
-        return STATUS_INSUFFICIENT_RESOURCES;
-    if (FlagOn(Flags, DS_MEMORY_INIT_ZERO))
-        RtlZeroMemory(pointer, Size);
-    *Pointer = pointer;
+NTSTATUS DsEraseFile() {
     return STATUS_SUCCESS;
-}
-
-VOID DsMemFree(_In_ PVOID Pointer) {
-    NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
-    ExFreePoolWithTag(Pointer, DS_DEFAULT_POOL_TAG);
 }
